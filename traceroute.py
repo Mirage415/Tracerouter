@@ -115,9 +115,3 @@ class Traceroute:
             print(
                 f'TTL: {result['ttl']:3}\nAddr: {result.get('addr', '*'):<15}\nResponse: {result['type']}\nRTT: {result.get('rtt', '')}'
                 )
-
-
-        
-    
-            
-
