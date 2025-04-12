@@ -113,5 +113,13 @@ class Traceroute:
     def print_results(self):
         for result in self._results:
             print(
-                f'TTL: {result['ttl']:3}\nAddr: {result.get('addr', '*'):<15}\nResponse: {result['type']}\nRTT: {result.get('rtt', '')}'
+                f"TTL: {result['ttl']:3}\nAddr: {result.get('addr', '*'):<15}\nResponse: {result['type']}\nRTT: {result.get('rtt', '')}"
                 )
+
+if __name__ == "__main__":
+
+    destination = 'www.google.com'
+    # destination = '8.8.8.8'
+    tracer = Traceroute(destination)
+    tracer.perform_traceroute()
+    tracer.print_results()
