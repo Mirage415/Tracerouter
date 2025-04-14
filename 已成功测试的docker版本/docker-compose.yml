@@ -1,0 +1,155 @@
+version: '3'
+
+networks:
+  net-a:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+  net-b:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.101.0/24
+  net-c:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.102.0/24
+  net-d:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.103.0/24
+  net-e:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.104.0/24
+  net-f:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.105.0/24
+  net-g:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.106.0/24
+
+services:
+  r1:
+    build:
+      context: .
+      dockerfile: router.Dockerfile
+    container_name: r1
+    hostname: r1
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      net-a:
+        ipv4_address: 192.168.100.100
+      net-b:
+        ipv4_address: 192.168.101.100
+      net-c:
+        ipv4_address: 192.168.102.100
+    volumes:
+      - ./r1_setup.sh:/setup.sh
+    command: sh -c "chmod +x /setup.sh && /setup.sh && tail -f /dev/null"
+
+  r2:
+    build:
+      context: .
+      dockerfile: router.Dockerfile
+    container_name: r2
+    hostname: r2
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      net-a:
+        ipv4_address: 192.168.100.101
+      net-d:
+        ipv4_address: 192.168.103.100
+      net-e:
+        ipv4_address: 192.168.104.100
+    volumes:
+      - ./r2_setup.sh:/setup.sh
+    command: sh -c "chmod +x /setup.sh && /setup.sh && tail -f /dev/null"
+
+  r3:
+    build:
+      context: .
+      dockerfile: router.Dockerfile
+    container_name: r3
+    hostname: r3
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      net-b:
+        ipv4_address: 192.168.101.101
+      net-d:
+        ipv4_address: 192.168.103.101
+      net-f:
+        ipv4_address: 192.168.105.100
+    volumes:
+      - ./r3_setup.sh:/setup.sh
+    command: sh -c "chmod +x /setup.sh && /setup.sh && tail -f /dev/null"
+
+  r4:
+    build:
+      context: .
+      dockerfile: router.Dockerfile
+    container_name: r4
+    hostname: r4
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      net-c:
+        ipv4_address: 192.168.102.101
+      net-e:
+        ipv4_address: 192.168.104.101
+      net-f:
+        ipv4_address: 192.168.105.101
+      net-g:
+        ipv4_address: 192.168.106.100
+    volumes:
+      - ./r4_setup.sh:/setup.sh
+    command: sh -c "chmod +x /setup.sh && /setup.sh && tail -f /dev/null"
+
+  server1:
+    build:
+      context: .
+      dockerfile: server.Dockerfile
+    container_name: server1
+    hostname: server1
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      net-a:
+        ipv4_address: 192.168.100.200
+    volumes:
+      - ./server1_setup.sh:/setup.sh
+    command: sh -c "chmod +x /setup.sh && /setup.sh && tail -f /dev/null"
+
+  client1:
+    build:
+      context: .
+      dockerfile: client.Dockerfile
+    container_name: client1
+    hostname: client1
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      net-g:
+        ipv4_address: 192.168.106.200
+    volumes:
+      - ./traceroute.py:/app/traceroute.py
+      - ./client1_setup.sh:/setup.sh
+      - ./target_ips.txt:/app/target_ips.txt
+    command: sh -c "chmod +x /setup.sh && /setup.sh && tail -f /dev/null"

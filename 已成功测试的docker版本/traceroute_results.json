@@ -1,0 +1,275 @@
+{
+  "192.168.100.200": {
+    "target": "192.168.100.200",
+    "timestamp": "2025-04-14T05:16:54.889255",
+    "hops": {
+      "1": {
+        "udp": [
+          {
+            "protocol": "udp",
+            "ttl": 1,
+            "rtt": 187.97779083251953,
+            "success": true,
+            "resp_ip": "192.168.106.100",
+            "hostname": "r4.project_net-g",
+            "is_destination": false
+          },
+          {
+            "protocol": "udp",
+            "ttl": 1,
+            "rtt": 74.80669021606445,
+            "success": true,
+            "resp_ip": "192.168.106.100",
+            "hostname": "r4.project_net-g",
+            "is_destination": false
+          },
+          {
+            "protocol": "udp",
+            "ttl": 1,
+            "rtt": 69.06986236572266,
+            "success": true,
+            "resp_ip": "192.168.106.100",
+            "hostname": "r4.project_net-g",
+            "is_destination": false
+          }
+        ],
+        "tcp": [
+          {
+            "protocol": "tcp",
+            "ttl": 1,
+            "rtt": 79.93006706237793,
+            "success": true,
+            "resp_ip": "192.168.106.100",
+            "hostname": "r4.project_net-g",
+            "is_destination": false
+          },
+          {
+            "protocol": "tcp",
+            "ttl": 1,
+            "rtt": 78.81855964660645,
+            "success": true,
+            "resp_ip": "192.168.106.100",
+            "hostname": "r4.project_net-g",
+            "is_destination": false
+          },
+          {
+            "protocol": "tcp",
+            "ttl": 1,
+            "rtt": 118.15500259399414,
+            "success": true,
+            "resp_ip": "192.168.106.100",
+            "hostname": "r4.project_net-g",
+            "is_destination": false
+          }
+        ],
+        "icmp": [
+          {
+            "protocol": "icmp",
+            "ttl": 1,
+            "rtt": 2159.345865249634,
+            "success": false,
+            "resp_ip": null,
+            "hostname": null,
+            "is_destination": false
+          },
+          {
+            "protocol": "icmp",
+            "ttl": 1,
+            "rtt": 119.74143981933594,
+            "success": true,
+            "resp_ip": "192.168.106.100",
+            "hostname": "r4.project_net-g",
+            "is_destination": false
+          },
+          {
+            "protocol": "icmp",
+            "ttl": 1,
+            "rtt": 80.07168769836426,
+            "success": true,
+            "resp_ip": "192.168.106.100",
+            "hostname": "r4.project_net-g",
+            "is_destination": false
+          }
+        ]
+      },
+      "2": {
+        "udp": [
+          {
+            "protocol": "udp",
+            "ttl": 2,
+            "rtt": 78.7351131439209,
+            "success": true,
+            "resp_ip": "192.168.102.100",
+            "hostname": null,
+            "is_destination": false
+          },
+          {
+            "protocol": "udp",
+            "ttl": 2,
+            "rtt": 80.83868026733398,
+            "success": true,
+            "resp_ip": "192.168.102.100",
+            "hostname": null,
+            "is_destination": false
+          },
+          {
+            "protocol": "udp",
+            "ttl": 2,
+            "rtt": 73.1649398803711,
+            "success": true,
+            "resp_ip": "192.168.102.100",
+            "hostname": null,
+            "is_destination": false
+          }
+        ],
+        "tcp": [
+          {
+            "protocol": "tcp",
+            "ttl": 2,
+            "rtt": 64.51201438903809,
+            "success": true,
+            "resp_ip": "192.168.102.100",
+            "hostname": null,
+            "is_destination": false
+          },
+          {
+            "protocol": "tcp",
+            "ttl": 2,
+            "rtt": 82.24892616271973,
+            "success": true,
+            "resp_ip": "192.168.102.100",
+            "hostname": null,
+            "is_destination": false
+          },
+          {
+            "protocol": "tcp",
+            "ttl": 2,
+            "rtt": 96.85206413269043,
+            "success": true,
+            "resp_ip": "192.168.102.100",
+            "hostname": null,
+            "is_destination": false
+          }
+        ],
+        "icmp": [
+          {
+            "protocol": "icmp",
+            "ttl": 2,
+            "rtt": 90.64483642578125,
+            "success": true,
+            "resp_ip": "192.168.102.100",
+            "hostname": null,
+            "is_destination": false
+          },
+          {
+            "protocol": "icmp",
+            "ttl": 2,
+            "rtt": 79.57005500793457,
+            "success": true,
+            "resp_ip": "192.168.102.100",
+            "hostname": null,
+            "is_destination": false
+          },
+          {
+            "protocol": "icmp",
+            "ttl": 2,
+            "rtt": 74.67961311340332,
+            "success": true,
+            "resp_ip": "192.168.102.100",
+            "hostname": null,
+            "is_destination": false
+          }
+        ]
+      },
+      "3": {
+        "udp": [
+          {
+            "protocol": "udp",
+            "ttl": 3,
+            "rtt": 78.50360870361328,
+            "success": true,
+            "resp_ip": "192.168.100.200",
+            "hostname": null,
+            "is_destination": true
+          },
+          {
+            "protocol": "udp",
+            "ttl": 3,
+            "rtt": 92.34356880187988,
+            "success": true,
+            "resp_ip": "192.168.100.200",
+            "hostname": null,
+            "is_destination": true
+          },
+          {
+            "protocol": "udp",
+            "ttl": 3,
+            "rtt": 116.3482666015625,
+            "success": true,
+            "resp_ip": "192.168.100.200",
+            "hostname": null,
+            "is_destination": true
+          }
+        ],
+        "tcp": [
+          {
+            "protocol": "tcp",
+            "ttl": 3,
+            "rtt": 76.49350166320801,
+            "success": true,
+            "resp_ip": "192.168.100.200",
+            "hostname": null,
+            "is_destination": true
+          },
+          {
+            "protocol": "tcp",
+            "ttl": 3,
+            "rtt": 78.93538475036621,
+            "success": true,
+            "resp_ip": "192.168.100.200",
+            "hostname": null,
+            "is_destination": true
+          },
+          {
+            "protocol": "tcp",
+            "ttl": 3,
+            "rtt": 74.44596290588379,
+            "success": true,
+            "resp_ip": "192.168.100.200",
+            "hostname": null,
+            "is_destination": true
+          }
+        ],
+        "icmp": [
+          {
+            "protocol": "icmp",
+            "ttl": 3,
+            "rtt": 75.50930976867676,
+            "success": true,
+            "resp_ip": "192.168.100.200",
+            "hostname": null,
+            "is_destination": true
+          },
+          {
+            "protocol": "icmp",
+            "ttl": 3,
+            "rtt": 98.82283210754395,
+            "success": true,
+            "resp_ip": "192.168.100.200",
+            "hostname": null,
+            "is_destination": true
+          },
+          {
+            "protocol": "icmp",
+            "ttl": 3,
+            "rtt": 64.8338794708252,
+            "success": true,
+            "resp_ip": "192.168.100.200",
+            "hostname": null,
+            "is_destination": true
+          }
+        ]
+      }
+    }
+  }
+}
