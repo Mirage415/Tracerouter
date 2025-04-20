@@ -7,7 +7,7 @@ import sys
 from typing import Optional, List, Tuple, Dict, Union
 import random
 import platform
-
+import numpy
 from numpy.ma.core import append
 
 
@@ -68,7 +68,7 @@ class Traceroute:
 
         self.results = {}
 
-        print(self.__dict__)
+        # print(self.__dict__)
 
     @staticmethod
     def _print_warning(text):

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>p5 Voice 测试</title>
+  <style>body{margin:0;}</style>
+
+  <!-- 1. p5 核心 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+  <!-- 2. p5.sound（麦克风、FFT） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+  <!-- 3. 你的声波脚本，确保和 index.html 在同一目录 -->
+  <script src="./voice.js"></script>
+</head>
+<body>
+  <!-- 运行时看一下控制台是否加载了 voice.js -->
+  <script>
+    console.log('如果你看到了这条消息，index.html 加载成功');
+  </script>
+</body>
+</html>
