@@ -9,7 +9,8 @@ import random
 import platform
 import requests
 
-from numpy.ma.core import append 
+import numpy
+from numpy.ma.core import append
 
 def ip_to_lattitude_longitude(ip:str) -> Tuple[Optional[float], Optional[float]]:
     """ Function goal is to use a JSON API to look up the longitude and lattitude (Geographic)
@@ -84,7 +85,7 @@ class Traceroute:
 
         self.results = {}
 
-        print(self.__dict__)
+        # print(self.__dict__)
 
     @staticmethod
     def _print_warning(text):

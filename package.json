@@ -1,0 +1,25 @@
+{
+  "name": "tracerouter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",                    
+  "scripts": {
+    "start": "electron .",            
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mirage415/Tracerouter.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Mirage415/Tracerouter/issues"
+  },
+  "homepage": "https://github.com/Mirage415/Tracerouter#readme",
+  "devDependencies": {
+    "electron": "^35.2.0"
+  }
+}
+
