@@ -7,9 +7,25 @@ import sys
 from typing import Optional, List, Tuple, Dict, Union
 import random
 import platform
+import requests
 
-from numpy.ma.core import append
+from numpy.ma.core import append 
 
+def ip_to_lattitude_longitude(ip:str) -> Tuple[Optional[float], Optional[float]]:
+    """ Function goal is to use a JSON API to look up the longitude and lattitude (Geographic)
+     Location of a IP """    
+    try:
+        # Send a GET request to the IP geolocation API with a 2-second timeout
+        r = requests.get(f" ", timeout=2)
+        # Parse Response into a dictionary
+        data = r.json()
+        if data.get("status") == "success":
+        # If the API reports success, extract and return (latitude, longitude)
+            return data["lattitude"], data["longitutde"]
+    except Exception:
+            # On any exception (network errors, invalid JSON, etc.)
+        pass
+    return None, None
 
 class Traceroute:
     def __init__(self):
