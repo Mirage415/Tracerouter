@@ -1,75 +1,37 @@
 {
-  "192.168.100.200": {
-    "target": "192.168.100.200",
-    "timestamp": "2025-04-14T05:16:54.889255",
-    "hops": {
-      "1": {
-        "udp": [
-          {
-            "protocol": "udp",
-            "ttl": 1,
-            "rtt": 187.97779083251953,
-            "success": true,
-            "resp_ip": "192.168.106.100",
-            "hostname": "r4.project_net-g",
-            "is_destination": false
-          },
-          {
-            "protocol": "udp",
-            "ttl": 1,
-            "rtt": 74.80669021606445,
-            "success": true,
-            "resp_ip": "192.168.106.100",
-            "hostname": "r4.project_net-g",
-            "is_destination": false
-          },
-          {
-            "protocol": "udp",
-            "ttl": 1,
-            "rtt": 69.06986236572266,
-            "success": true,
-            "resp_ip": "192.168.106.100",
-            "hostname": "r4.project_net-g",
-            "is_destination": false
-          }
+    'target': str                  # 目标IP
+    'ip_protocol': str             # IP协议类型
+    'protocol': str                # 传输层协议类型
+    TTL值 (int): {
+        'probes': [
+            {
+                'ip': str,         # 响应IP
+                'rtt': float,      # 往返时间（毫秒）
+                'reached': bool    # 是否到达目标
+            },
+            ...                    # 每个探测包的记录
         ],
-        "tcp": [
-          {
-            "protocol": "tcp",
-            "ttl": 1,
-            "rtt": 79.93006706237793,
-            "success": true,
-            "resp_ip": "192.168.106.100",
-            "hostname": "r4.project_net-g",
-            "is_destination": false
-          },
-          {
-            "protocol": "tcp",
-            "ttl": 1,
-            "rtt": 78.81855964660645,
-            "success": true,
-            "resp_ip": "192.168.106.100",
-            "hostname": "r4.project_net-g",
-            "is_destination": false
-          },
-          {
-            "protocol": "tcp",
-            "ttl": 1,
-            "rtt": 118.15500259399414,
-            "success": true,
-            "resp_ip": "192.168.106.100",
-            "hostname": "r4.project_net-g",
-            "is_destination": false
-          }
-        ],
-        "icmp": [
-          {
-            "protocol": "icmp",
-            "ttl": 1,
-            "rtt": 2159.345865249634,
-            "success": false,
-            "resp_ip": null,
-            "hostname": null,
-            "is_destination": false
-            "extionsions":{}
-          }
+        'ip': str,                 # 该跳的主IP
+        'hostname': str,           # 解析的主机名（不启用解析主机名则为None）
+        'extensions': {            # ICMP扩展信息
+            'mpls': [
+                {
+                    'label': int,
+                    'tc': int,
+                    's': int,
+                    'ttl': int
+                },
+                ...
+            ],
+            'other': [
+                {
+                    'type': int,
+                    'length': int,
+                    'data': bytes
+                },
+                ...
+            ]
+        }
+    },
+    ...
+}
