@@ -2,7 +2,7 @@
     'target': str                  # 目标IP
     'ip_protocol': str             # IP协议类型
     'protocol': str                # 传输层协议类型
-    TTL值 (int): {
+    TTL值 (int): {                 # 第n跳
         'probes': [
             {
                 'ip': str,         # 响应IP
