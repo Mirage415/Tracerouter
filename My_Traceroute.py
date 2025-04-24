@@ -4,29 +4,12 @@ import time
 import struct
 import select
 import sys
-from typing import Optional, List, Tuple, Dict, Union
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
+import queue
+from typing import Optional, Tuple, Dict
 import random
-import platform
-import requests
 
-import numpy
-from numpy.ma.core import append
-
-def ip_to_lattitude_longitude(ip:str) -> Tuple[Optional[float], Optional[float]]:
-    """ Function goal is to use a JSON API to look up the longitude and lattitude (Geographic)
-     Location of a IP """    
-    try:
-        # Send a GET request to the IP geolocation API with a 2-second timeout
-        r = requests.get(f" ", timeout=2)
-        # Parse Response into a dictionary
-        data = r.json()
-        if data.get("status") == "success":
-        # If the API reports success, extract and return (latitude, longitude)
-            return data["lattitude"], data["longitutde"]
-    except Exception:
-            # On any exception (network errors, invalid JSON, etc.)
-        pass
-    return None, None
 
 class Traceroute:
     def __init__(self):
@@ -39,13 +22,21 @@ class Traceroute:
 
         # basic control
         self.queries_per_hop = self.options.queries
-        self.queries_per_send = self.options.sim_queries
+        # self.queries_per_send = self.options.sim_queries
 
         self.timeout = self.options.wait / 1000.0  # 转换为秒
         self.min_send_interval = self.options.z
 
         self.max_hops = self.options.max_hops
         self.first_ttl = self.options.first_hop
+
+        self.flag_no_resolve = self.options.no_resolve
+
+
+
+        #multi threading
+        self.responses = queue.Queue()
+        self.probes_lock = Lock()
 
 
         # Ethernet layer options
@@ -55,6 +46,7 @@ class Traceroute:
         # IP protocol options
         self.ip_protocol =  "6" if self.options.ipv6 else ("4" if self.options.ipv4 else None)
         self.dest_ip = self._resolve_hostname(self.options.host)
+        self.ip_protocol = self._decide_ip_protocol()
         self.src_ip = self.options.source
         # 从本机配置的ip地址发出，如果不是，会报错：traceroute: Cannot assign requested address
         self.type_of_service = self.options.tos
@@ -74,18 +66,18 @@ class Traceroute:
 
 
         # output control
-        self.flag_no_resolve = self.options.no_resolve
         self.flag_show_extensions = self.options.extensions
         self.flag_verbose = self.options.verbose
 
 
         # initialize socket according to control info
-        self.sock = self._create_socket()
+        self.sock= self._create_socket()
         self._config_params()
 
         self.results = {}
+        self.recv_running = False
+        self.probes_sent = {}  # 记录已发送的探测包 {(ttl, seq): probe_info}
 
-        # print(self.__dict__)
 
     @staticmethod
     def _print_warning(text):
@@ -93,8 +85,15 @@ class Traceroute:
         reset_color = "\033[0m"
         print(f"{color}{text}{reset_color}")
 
+    def _decide_ip_protocol(self):
+        ret = self.ip_protocol if self.ip_protocol else '4' if '.' in self.dest_ip else '6' if ':' in self.dest_ip else None
+        if ret is None:
+            raise ValueError(f"unable to resolve host:{self.options.host}")
+        else:
+            return ret
 
-    def _parse_args(self) -> argparse.Namespace:
+    @staticmethod
+    def  _parse_args() -> argparse.Namespace:
         parser = argparse.ArgumentParser(description="Python实现的Traceroute工具")
 
         parser.add_argument("host",
@@ -123,7 +122,7 @@ class Traceroute:
 
         # Transport layer params
         protocol_group = parser.add_mutually_exclusive_group()
-        protocol_group.add_argument("-P", "--protocol", choices=["icmp", "udp", "tcp", "tcpconn"], default="udp",
+        protocol_group.add_argument("-P", "--protocol", choices=["icmp", "udp", "tcp"], default="udp",
                             help="Protocol used, valid input:\"icmp\", \"udp\", \"tcp\", \"tcpconn\" (default: udp)")
         protocol_group.add_argument("-I", "--icmp", action="store_const", dest="protocol",const="icmp",
                             help="使用ICMP ECHO (equivalent to -P icmp)")
@@ -139,10 +138,10 @@ class Traceroute:
                             help="Waiting time for reply(ms) (default: 5000)")
         parser.add_argument("-q", "--queries", type=int, default=3,
                             help="the number of prob packets sent for every hop (default: 3)")
-        parser.add_argument("-N", "--sim-queries", type=int, default=16,
-                            help="the number of probes to be sent simultaneously (default: 16)")
         parser.add_argument("-z", type=int, default=0,
                             help="Minimum interval time between sending probe packets(ms) (default: 0)")
+        # parser.add_argument("-N", "--sim-queries", type=int, default=16,
+        #                     help="the number of probes to be sent simultaneously (default: 16)")
 
         # advance control
         parser.add_argument("-n", "--no-resolve", action="store_true",
@@ -190,8 +189,8 @@ class Traceroute:
             parser.error("-w/--wait Waiting time for reply(ms) 不能为负数，请修改")
         if args.queries<0:
             parser.error("-q/--queries number of prob packets sent for every hop 不能为负数，请修改")
-        if args.sim_queries<0:
-            parser.error("-N/--sim-queries the number of probes to be sent simultaneously 不能为负数，请修改")
+        # if args.sim_queries<0:
+        #     parser.error("-N/--sim-queries the number of probes to be sent simultaneously 不能为负数，请修改")
         if args.z<0:
             parser.error("-z Minimum interval time between sending probe packets(ms) 不能为负数，请修改")
 
@@ -266,7 +265,7 @@ class Traceroute:
 
             option = struct.pack('BBBB', 0x83, len(route_data) + 3, init_ptr, 0) + route_data
             try:
-                self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_OPTIONS, option)
+                self.sock.setsockopt(socket.SOL_IP, socket.IP_OPTIONS, option)
             except socket.error as e:
                 self._print_warning(f"unable to add lsrr option to IPv4 header. Exception info:{e}")
                 sys.exit(1)
@@ -296,9 +295,10 @@ class Traceroute:
         根据attribute创建套接字并绑定到指定源IP和端口
         :return: 配置好的socket对象
         """
+        print("is creating sockets")
 
         if self.protocol == 'tcp' or self.protocol == 'tcpconn':
-            trans_protocol = socket.SOCK_STREAM
+            trans_protocol = socket.SOCK_RAW
             ip_type = socket.IPPROTO_TCP
         elif self.protocol == 'udp':
             trans_protocol = socket.SOCK_DGRAM
@@ -331,9 +331,37 @@ class Traceroute:
             self._get_local_ips()
             sys.exit(1)
 
+            # 新增：接收套接字初始化验证
+        try:
+            # 统一接收套接字协议处理
+            recv_proto = {
+                "icmp": socket.IPPROTO_ICMP,
+                "udp": socket.IPPROTO_ICMP,
+                "tcp": socket.IPPROTO_TCP
+            }[self.protocol]
+
+            # 显式指定地址族
+            recv_family = socket.AF_INET if self.ip_protocol == '4' else socket.AF_INET6
+            self.recv_sock = socket.socket(
+                family=recv_family,
+                type=socket.SOCK_RAW,
+                proto=recv_proto
+            )
+
+            # 统一设置套接字选项
+            self.recv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.recv_sock.settimeout(self.timeout)
+            self.recv_sock.bind(('', 0))  # 通用绑定方式
+
+            print(f"[DEBUG] 接收套接字创建成功 fd={self.recv_sock.fileno()}")
+
+        except Exception as e:
+            print(f"无法创建接收套接字: {str(e)}")
+            sys.exit(1)
         return sock
 
-    def _get_local_ips(self):
+    @staticmethod
+    def _get_local_ips():
         ips = []
         try:
             hostname = socket.gethostname()
@@ -346,64 +374,103 @@ class Traceroute:
         print("usable local ip:", end=' ')
         print(list(set(ips)))
 
-
-
-
-
-
-
-
     def run(self):
-        """执行traceroute"""
-        print(f"traceroute到 {self.options.host} ({self.dest_ip}), "
-              f"最多 {self.max_hops} 跳, {self.queries_per_hop} 个探测包")
+        """带并行探测的执行主函数"""
+        print(f"traceroute to {self.options.host} ({self.dest_ip}), "
+              f"max hops {self.max_hops}, {self.queries_per_hop} probes per hop")
 
-        while self.first_ttl <= self.max_hops:
-            hop_result = self._probe_hop()
-            self._display_hop(hop_result)
+        # 调试：检查接收套接字状态
+        print(f"[DEBUG] Main thread - recv_sock fd: {self.recv_sock.fileno() if hasattr(self, 'recv_sock') else 'NOT CREATED'}")
 
-            if hop_result["reached"]:
-                break
 
-            self.first_ttl += 1
+        try:
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                # 启动接收线程（确保先启动接收线程）
+                recv_future = executor.submit(self._receiver_thread)
+                print(f"[DEBUG] Receiver future created: {recv_future}")
 
-    def _probe_hop(self) -> Dict:
-        """探测指定TTL的一跳"""
-        hop_result = {
-            "ttl": self.first_ttl,
-            "probes": [],
-            "reached": False,
-            "ip": None,
-            "hostname": None
-        }
+                # 等待接收线程初始化（最多1秒）
+                start_time = time.time()
+                while not getattr(self, 'recv_running', False) and (time.time() - start_time) < 1:
+                    time.sleep(0.1)
 
-        for seq in range(1, self.queries_per_hop + 1):
-            probe_result = self._send_probe(seq)
-            hop_result["probes"].append(probe_result)
+                if not getattr(self, 'recv_running', False):
+                    print("[ERROR] Receiver thread failed to start!")
+                    return
 
-            if probe_result["ip"] and not hop_result["ip"]:
-                hop_result["ip"] = probe_result["ip"]
                 try:
-                    hop_result["hostname"] = socket.gethostbyaddr(probe_result["ip"])[0]
-                except socket.herror:
-                    hop_result["hostname"] = probe_result["ip"]
+                    # 发送探测包
+                    send_futures = []
+                    for ttl in range(self.first_ttl, self.first_ttl + self.max_hops):
+                        for seq in range(1, self.queries_per_hop + 1):
+                            future = executor.submit(
+                                self._send_and_record_probe,
+                                ttl=ttl,
+                                seq=seq
+                            )
+                            send_futures.append(future)
+                            time.sleep(self.min_send_interval / 1000)
 
-            if probe_result["reached"]:
-                hop_result["reached"] = True
+                        # 实时显示结果
+                        self._display_current_hop(ttl)
+
+                    # 等待发送完成
+                    for future in as_completed(send_futures):
+                        future.result()  # 只是为了捕获异常
+
+                except KeyboardInterrupt:
+                    print("\nTrace interrupted by user")
+                finally:
+                    self.recv_running = False
+                    recv_future.result(timeout=2)  # 增加等待时间
+        except Exception as e:
+            print(f"[CRITICAL] Main thread error: {e}")
+        finally:
+            self.close()
+            self._display_final_results()
+
+    def _receiver_thread(self):
+        """持续接收回复的线程"""
+        print(f"\n[DEBUG] Receiver thread STARTED (recv_sock fd: {self.recv_sock.fileno()})")  # 调试输出
+
+        self.recv_running = True
+        while getattr(self, 'recv_running', True):
+            try:
+                if not hasattr(self, 'recv_sock') or self.recv_sock.fileno() == -1:
+                    print("[ERROR] Receive socket invalid!")
+                    break
+
+                ready, _, _ = select.select([self.recv_sock], [], [], 0.1)
+                if ready:
+                    try:
+                        packet, addr = self.recv_sock.recvfrom(1024)
+                        print(f"[DEBUG] Received packet from {addr[0]}")  # 调试输出
+                        self._process_reply_packet(packet, addr)
+                    except socket.timeout:
+                        continue
+                    except ConnectionResetError:
+                        print("[WARNING] Connection reset by peer")
+                        continue
+
+            except Exception as e:
+                print(f"[ERROR] Receiver thread crashed: {type(e).__name__}: {e}")
                 break
 
-        return hop_result
 
-    def _send_probe(self, seq: int) -> Dict:
-        """发送单个探测包"""
+
+    def _send_and_record_probe(self, ttl: int, seq: int):
+        """发送单个探测包并记录结果"""
+        # print(f"Sender thread started, send seq: {seq}")
         probe_id = random.randint(0, 65535)
         send_time = time.time()
 
         # 设置TTL
-        self.send_socket.setsockopt(
-            socket.SOL_IP, socket.IP_TTL, self.first_ttl)
+        if self.ip_protocol == '4':
+            self.sock.setsockopt(socket.SOL_IP, socket.IP_TTL, ttl)
+        else:
+            self.sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_UNICAST_HOPS, ttl)
 
-        # 根据协议发送不同的探测包
+        # 发送探测包
         if self.protocol == "icmp":
             self._send_icmp_probe(probe_id, seq)
         elif self.protocol == "udp":
@@ -411,169 +478,452 @@ class Traceroute:
         elif self.protocol == "tcp":
             self._send_tcp_probe(seq)
 
-        # 等待回复
-        reply = self._wait_for_reply(probe_id, seq)
+        # 记录发送信息用于匹配回复
+        probe_info = {
+            'send_time': send_time,
+            'ttl': ttl,
+            'seq': seq,
+            'probe_id': probe_id,
+            'matched': False
+        }
+        self.probes_sent[(ttl, seq)] = probe_info
 
-        if reply:
-            rtt = (time.time() - send_time) * 1000  # 转换为毫秒
-            return {
-                "ip": reply[0],
-                "rtt": rtt,
-                "reached": reply[0] == self.dest_ip
+    def _process_reply_packet(self, packet: bytes, addr: tuple):
+        """处理接收到的回复包"""
+        try:
+            src_ip = addr[0]
+            extensions = None
+
+            if self.ip_protocol == '4':
+                ip_header_len = (packet[0] & 0x0F) * 4
+                transport_header = packet[ip_header_len:]
+
+                if self.flag_show_extensions:
+                    extensions = self._process_icmp_extensions(transport_header)
+
+                # ICMP协议处理
+                if len(transport_header) >= 8:
+                    type_, code = struct.unpack("!BB", transport_header[:2])
+
+                    # ICMP回复（对ICMP探测的响应）
+                    if type_ == 0 and self.protocol == "icmp":
+                        _, _, probe_id, seq = struct.unpack("!HHHH", transport_header[:8])
+                        self._match_reply(probe_id, seq, src_ip, extensions)
+
+                    # ICMP错误（对UDP/TCP的响应）
+                    elif type_ in (3, 11) and len(transport_header) >= 28:
+                        orig_ip_header = transport_header[8:28]
+                        orig_dst_ip = socket.inet_ntoa(orig_ip_header[16:20])
+
+                        if orig_dst_ip == self.dest_ip:
+                            if self.protocol == "udp":
+                                orig_header = transport_header[28:28 + 8]
+                                orig_sport, orig_dport = struct.unpack("!HH", orig_header[:4])
+                                seq = orig_dport - self.dest_port + 1
+                                self._match_reply(None, seq, src_ip, extensions)
+
+                            elif self.protocol == "tcp":
+                                orig_header = transport_header[28:28 + 20]
+                                orig_sport, orig_dport = struct.unpack("!HH", orig_header[:4])
+                                seq = orig_dport - self.dest_port + 1
+                                self._match_reply(None, seq, src_ip, extensions)
+
+        except Exception as e:
+            if self.flag_verbose:
+                print(f"Error processing reply: {e}")
+
+    def _match_reply(self, probe_id: Optional[int], seq: int, src_ip: str, extensions: Dict = None):
+        """匹配回复包与发送的探测包"""
+        # 通过seq找到对应的TTL（简化实现，实际可能需要更复杂的匹配逻辑）
+        with self.probes_lock:
+            for (ttl, s), probe in list(self.probes_sent.items()):
+                if s == seq and not probe['matched']:
+                    rtt = (time.time() - probe['send_time']) * 1000
+                    self._record_hop_result(ttl, src_ip, rtt, extensions or {})
+                    probe['matched'] = True
+                    break
+
+    def _record_hop_result(self, ttl: int, ip: str, rtt: float, extensions: Dict):
+        if ttl not in self.results:
+            self.results[ttl] = {
+                'probes': [],
+                'ip': ip,
+                'hostname': None if self.flag_no_resolve else self._resolve_ip_to_hostname(ip),
+                'extensions': extensions
             }
-        else:
-            return {
-                "ip": None,
-                "rtt": None,
-                "reached": False
-            }
+
+        self.results[ttl]['probes'].append({
+            'ip': ip,
+            'rtt': rtt,
+            'reached': ip == self.dest_ip
+        })
+
+        # 合并扩展信息
+        if extensions:
+            self.results[ttl]['extensions'] = extensions
+
+    def _resolve_ip_to_hostname(self, ip: str) -> str:
+        """IP地址解析为主机名"""
+        if self.flag_no_resolve:
+            return ip
+
+        try:
+            return socket.gethostbyaddr(ip)[0]
+        except (socket.herror, socket.gaierror):
+            return ip
+
+
 
     def _send_icmp_probe(self, probe_id: int, seq: int):
         """发送ICMP ECHO请求"""
         checksum = 0
+        timestamp = int(time.time())
         header = struct.pack("!BBHHH", 8, 0, checksum, probe_id, seq)
-        data = b"PythonTraceroute"
+        data = struct.pack('!HHI', probe_id, seq, timestamp)
+        data += b'\x00' * (64-len(data))
 
         # 计算校验和
         checksum = self._calculate_checksum(header + data)
         header = struct.pack("!BBHHH", 8, 0, checksum, probe_id, seq)
 
-        self.send_socket.sendto(header + data, (self.dest_ip, 0))
+        self.sock.sendto(header + data, (self.dest_ip, 0))
 
     def _send_udp_probe(self, seq: int):
         """发送UDP探测包"""
+        # print(f"UDP package {seq} sent.")
         port = self.dest_port + seq - 1
+        if port > 65535:
+            port = (port-49152) % 16384 + 49152
         data = b"PythonTraceroute"
-        self.send_socket.sendto(data, (self.dest_ip, port))
+        data += b'\x00' * (64 - len(data))
+        self.sock.sendto(data, (self.dest_ip, port))
 
-    def _send_tcp_probe(self, seq: int):
-        """发送TCP SYN探测包"""
-        port = self.dest_port
-        if seq > 1:
-            port += seq - 1
+    def _send_tcp_probe(self, seq):
+        """使用原始套接字发送TCP SYN包"""
+        if self.ip_protocol == "4":
+            packet = self._build_ipv4_header() + self._build_tcp_syn(seq)
+        else:
+            packet = self._build_ipv6_header() + self._build_tcp_syn(seq)
+        self.sock.sendto(packet, (self.dest_ip, self.dest_port))
 
-        try:
-            self.send_socket.connect((self.dest_ip, port))
-            self.send_socket.send(b"")
-        except socket.error:
-            pass
+    def _build_ipv4_header(self):
+        """构造IPv4头部"""
+        version_ihl = 0x45
+        dscp_ecn = self.type_of_service
+        total_len = 40  # 20字节IP头 + 20字节TCP头
+        identification = random.randint(0, 65535)
+        flags_frag = 0x4000 if self.flag_df else 0  # DF标志
+        ttl = 64  # 默认TTL，实际发送时会覆盖
+        protocol = socket.IPPROTO_TCP
+        src_ip = socket.inet_aton(self.src_ip or socket.gethostbyname(socket.gethostname()))
+        dst_ip = socket.inet_aton(self.dest_ip)
 
-    def _wait_for_reply(self, probe_id: int, seq: int) -> Optional[Tuple[str, int]]:
-        """等待回复"""
+        header = struct.pack("!BBHHHBBH4s4s",
+                             version_ihl, dscp_ecn, total_len,
+                             identification, flags_frag,
+                             ttl, protocol, 0,  # 校验和先填0
+                             src_ip, dst_ip)
+
+        # 计算校验和
+        checksum = self._calculate_checksum(header)
+        header = header[:10] + struct.pack("H", checksum) + header[12:]
+        return header
+
+    def _build_ipv6_header(self, payload_len: int = 40) -> bytes:
+        version = 0x6
+        traffic_class = self.type_of_service
+        flow_label = 0
+
+        # 基础头部 (40字节)
+        header = struct.pack("!IHBB16s16s",
+                             (version << 28) | (traffic_class << 20) | flow_label,
+                             payload_len,
+                             socket.IPPROTO_TCP if self.protocol == "tcp" else socket.IPPROTO_UDP,
+                             64,  # Hop Limit (会被覆盖)
+                             socket.inet_pton(socket.AF_INET6, self.src_ip or "::"),
+                             socket.inet_pton(socket.AF_INET6, self.dest_ip)
+                             )
+
+        # 添加扩展头
+        if self.LSRR_list:
+            routing_header = self._build_ipv6_routing_header()
+            header += routing_header
+            # 更新下一个头部字段
+            header = header[:6] + bytes([43]) + header[7:]  # 43是路由头的协议号
+
+        return header
+
+    def _build_ipv6_routing_header(self) -> bytes:
+        """构造IPv6路由头(类型0)"""
+        segments = len(self.LSRR_list)
+        header = struct.pack("!BBBB",
+                             0,  # 下一个头部
+                             2 * (segments + 1),  # 头长度(以8字节为单位)
+                             0,  # 路由类型(0表示LSRR)
+                             segments
+                             )
+
+        # 添加地址
+        for ip in self.LSRR_list:
+            header += socket.inet_pton(socket.AF_INET6, self._resolve_hostname(ip))
+
+        # 填充到8字节倍数
+        if len(header) % 8 != 0:
+            header += b'\x00' * (8 - (len(header) % 8))
+
+        return header
+
+    def _build_tcp_syn(self, seq):
+        tcp_header = struct.pack("!HHLLBBHHH",
+                                 self.src_port, self.dest_port,
+                                 seq, 0,  # 序列号
+                                 5 << 4,  # 数据偏移
+                                 0x02,  # SYN标志
+                                 8192,  # 窗口大小
+                                 0, 0  # 校验和和紧急指针
+                                 )
+
+        # 伪头部校验和(IPv4)
+        if self.ip_protocol == '4':
+            pseudo_header = struct.pack("!4s4sBBH",
+                                        socket.inet_aton(self.src_ip),
+                                        socket.inet_aton(self.dest_ip),
+                                        0, socket.IPPROTO_TCP, len(tcp_header))
+        else:
+            pseudo_header = struct.pack("!16s16sBBH",
+                                        socket.inet_pton(socket.AF_INET6, self.src_ip),
+                                        socket.inet_pton(socket.AF_INET6, self.dest_ip),
+                                        0, socket.IPPROTO_TCP, len(tcp_header))
+
+        # 计算校验和
+        checksum = self._calculate_checksum(pseudo_header + tcp_header)
+        return tcp_header[:16] + struct.pack("H", checksum) + tcp_header[18:]
+
+    def _wait_for_reply(self, probe_id: int, seq: int) -> Optional[Tuple[str, float]]:
         start_time = time.time()
 
         while time.time() - start_time < self.timeout:
-            ready = select.select([self.recv_socket], [], [], self.timeout)
-            if ready[0]:
-                try:
-                    packet, addr = self.recv_socket.recvfrom(1024)
-                    ip_header = packet[:20]
-                    src_ip = socket.inet_ntoa(ip_header[12:16])
+            ready = select.select([self.recv_sock], [], [], self.timeout)
+            if not ready[0]:
+                return None  # 超时无响应
 
+            try:
+                packet, addr = self.recv_sock.recvfrom(1024)
+                recv_time = time.time()
+                src_ip = addr[0]
+
+                # IPv4包解析
+                if self.ip_protocol == '4':
+                    ip_header_len = (packet[0] & 0x0F) * 4
+                    icmp_header = packet[ip_header_len:]
+
+                    # ICMP协议回复处理
                     if self.protocol == "icmp":
-                        if self._is_icmp_reply(packet[20:], probe_id, seq):
-                            return (src_ip, 0)
-                    elif self.protocol == "udp":
-                        if self._is_icmp_ttl_exceeded(packet[20:]):
-                            return (src_ip, 0)
-                        elif self._is_dest_unreachable(packet[20:]):
-                            return (src_ip, 0)
-                    elif self.protocol == "tcp":
-                        if self._is_tcp_syn_ack(packet[20:]):
-                            return (src_ip, 0)
-                        elif self._is_icmp_ttl_exceeded(packet[20:]):
-                            return (src_ip, 0)
-                except socket.error:
-                    continue
+                        if len(icmp_header) >= 8:
+                            type_, code, _, p_id, p_seq = struct.unpack("!BBHHH", icmp_header[:8])
+                            if type_ == 0 and code == 0 and p_id == probe_id and p_seq == seq:
+                                return src_ip, (recv_time - start_time) * 1000
+
+                    # UDP/TCP的ICMP错误回复处理
+                    elif self.protocol in ("udp", "tcp"):
+                        if len(icmp_header) >= 28:  # ICMP错误包至少包含原始IP头
+                            orig_ip_header = icmp_header[8:28]
+                            orig_dst_ip = socket.inet_ntoa(orig_ip_header[16:20])
+
+                            # 验证是发给我们的错误包
+                            if orig_dst_ip == self.dest_ip:
+                                type_, code = struct.unpack("!BB", icmp_header[:2])
+
+                                # TTL超时
+                                if type_ == 11 and code == 0:
+                                    return src_ip, (recv_time - start_time) * 1000
+
+                                # 不可达
+                                elif type_ == 3 and code in (1, 2, 3, 9, 10, 13):
+                                    return src_ip, (recv_time - start_time) * 1000
+
+                # TODO: IPv6处理逻辑待添加完善
+                elif self.ip_protocol == '6':
+                    # 基本IPv6头部长度
+                    ip_header_len = 40
+                    transport_header = packet[ip_header_len:]
+
+                    # ICMPv6处理
+                    if self.protocol == "icmp" and len(transport_header) >= 8:
+                        type_, code = struct.unpack("!BB", transport_header[:2])
+                        if type_ == 129:  # ICMPv6 Echo Reply
+                            _, _, p_id, p_seq = struct.unpack("!HHHH", transport_header[:8])
+                            if p_id == probe_id and p_seq == seq:
+                                return src_ip, (recv_time - start_time) * 1000
+
+            except socket.error as e:
+                if self.flag_verbose:
+                    print(f"Socket error while waiting for reply: {e}")
+                continue
 
         return None
 
-    def _is_icmp_reply(self, icmp_header: bytes, probe_id: int, seq: int) -> bool:
-        """检查是否是ICMP回复"""
-        if len(icmp_header) < 8:
-            return False
 
-        type_, code, checksum, p_id, p_seq = struct.unpack("!BBHHH", icmp_header[:8])
 
-        return (type_ == 0 and code == 0 and
-                p_id == probe_id and p_seq == seq)
-
-    def _is_icmp_ttl_exceeded(self, icmp_header: bytes) -> bool:
-        """检查是否是ICMP TTL超时"""
-        if len(icmp_header) < 8:
-            return False
-
-        type_, code = struct.unpack("!BB", icmp_header[:2])
-        return type_ == 11 and code == 0
-
-    def _is_dest_unreachable(self, icmp_header: bytes) -> bool:
-        """检查是否是目的不可达"""
-        if len(icmp_header) < 8:
-            return False
-
-        type_, code = struct.unpack("!BB", icmp_header[:2])
-        return type_ == 3
-
-    def _is_tcp_syn_ack(self, tcp_header: bytes) -> bool:
-        """检查是否是TCP SYN-ACK回复"""
-        if len(tcp_header) < 20:
-            return False
-
-        flags = tcp_header[13]
-        return (flags & 0x12) == 0x12  # SYN-ACK
-
-    def _calculate_checksum(self, data: bytes) -> int:
-        """计算ICMP校验和"""
-        if len(data) % 2 != 0:
-            data += b'\x00'
-
-        sum_ = 0
+    def _calculate_checksum(self, data:bytes):
+        sum = 0
         for i in range(0, len(data), 2):
-            sum_ += (data[i] << 8) + data[i + 1]
+            if i + 1 >= len(data):
+                sum += data[i] << 8
+            else:
+                sum += (data[i] << 8) + data[i + 1]
+        sum = (sum >> 16) + (sum & 0xffff)
+        sum += sum >> 16
+        return ~sum & 0xffff
 
-        sum_ = (sum_ >> 16) + (sum_ & 0xffff)
-        sum_ += sum_ >> 16
-        return ~sum_ & 0xffff
+    def _process_icmp_extensions(self, packet: bytes) -> Dict:
+        extensions = {
+            'mpls': [],
+            'other': []
+        }
 
-    def _display_hop(self, hop_result: Dict):
-        """显示一跳的结果"""
-        line = f"{hop_result['ttl']:2d}  "
+        if len(packet) < 8:
+            return extensions
 
-        if not hop_result["ip"]:
-            line += "*" * (self.queries_per_hop * 6 + 10)
+        # ICMP头部长度
+        icmp_header_len = 8
+
+        if len(packet) > icmp_header_len + 4:
+            ext_start = icmp_header_len
+            while ext_start + 4 <= len(packet):
+                ext_header = packet[ext_start:ext_start + 4]
+                ext_type, ext_len = struct.unpack("!BB", ext_header[:2])
+
+                # mpls类型
+                if ext_type == 1 and ext_len >= 8:
+                    mpls_data = packet[ext_start + 4:ext_start + 4 + ext_len - 4]
+                    for i in range(0, len(mpls_data), 4):
+                        if i + 4 <= len(mpls_data):
+                            label = struct.unpack("!I", mpls_data[i:i + 4])[0]
+                            extensions['mpls'].append({
+                                'label': label >> 12,
+                                'tc': (label >> 9) & 0x7,
+                                's': (label >> 8) & 0x1,
+                                'ttl': label & 0xFF
+                            })
+
+                # 其他类型扩展
+                else:
+                    extensions['other'].append({
+                        'type': ext_type,
+                        'length': ext_len,
+                        'data': packet[ext_start + 4:ext_start + ext_len]
+                    })
+
+                ext_start += ext_len
+
+        return extensions
+
+    def _display_current_hop(self, ttl: int):
+        """显示当前跳的实时结果"""
+        if ttl not in self.results or not self.results[ttl]['probes']:
+            return
+
+        hop = self.results[ttl]
+        line = f"{ttl:2d}  "
+
+        # 显示主机名或IP
+        if not hop['ip']:
+            line += "*" * (self.queries_per_hop * 8 + 15)
             print(line)
             return
 
-        # 显示主机名或IP
-        if self.options.no_resolve or not hop_result["hostname"]:
-            display_name = hop_result["ip"]
-        else:
-            display_name = f"{hop_result['hostname']} ({hop_result['ip']})"
-
-        line += f"{display_name}  "
+        display_name = hop['ip'] if self.flag_no_resolve else hop.get('hostname', hop['ip'])
+        line += f"{display_name:<15}  "
 
         # 显示每个探测的RTT
-        for probe in hop_result["probes"]:
-            if probe["rtt"] is not None:
-                line += f"{probe['rtt']:.3f} ms  "
+        for probe in hop['probes']:
+            if probe['rtt'] is not None:
+                line += f"{probe['rtt']:>7.2f} ms  "
             else:
-                line += "*  "
+                line += "    *     "
 
         print(line)
 
+        # 显示扩展信息（如果启用）
+        if self.flag_show_extensions and hop.get('extensions'):
+            self._display_extensions(hop['extensions'])
+
+    def _display_extensions(self, extensions: Dict):
+        """显示ICMP扩展信息"""
+        if extensions['mpls']:
+            print("    MPLS Labels:")
+            for mpls in extensions['mpls']:
+                print(f"      Label={mpls['label']}, TC={mpls['tc']}, "
+                      f"S={mpls['s']}, TTL={mpls['ttl']}")
+
+        if extensions['other']:
+            print("    Other Extensions:")
+            for ext in extensions['other']:
+                print(f"      Type={ext['type']}, Length={ext['length']}")
+
+    def _display_final_results(self):
+        """显示最终结果汇总"""
+        print("\n=== Trace Complete ===")
+        print(self.results)
+        reached_target = False
+
+        for ttl in sorted(self.results.keys()):
+            hop = self.results[ttl]
+
+            # 跳过完全无响应的跳
+            if not hop['ip'] and all(p['rtt'] is None for p in hop['probes']):
+                continue
+
+            print(f"\nHop {ttl}:")
+            print(f"  IP: {hop['ip']}")
+            if not self.flag_no_resolve and 'hostname' in hop:
+                print(f"  Hostname: {hop['hostname']}")
+
+            # 计算统计信息
+            valid_probes = [p for p in hop['probes'] if p['rtt'] is not None]
+            if valid_probes:
+                avg_rtt = sum(p['rtt'] for p in valid_probes) / len(valid_probes)
+                loss_rate = 1 - len(valid_probes) / len(hop['probes'])
+                print(f"  Avg RTT: {avg_rtt:.2f} ms")
+                print(f"  Loss: {loss_rate:.0%}")
+
+                # 检查是否到达目标
+                if any(p['reached'] for p in hop['probes']):
+                    print("  *** REACHED TARGET ***")
+                    reached_target = True
+                    break
+            else:
+                print("  All probes timed out")
+
+        if not reached_target:
+            print("\nWarning: Did not reach target host within max hops")
+
     def close(self):
-        """关闭套接字"""
-        self.send_socket.close()
-        self.recv_socket.close()
+        """安全关闭套接字"""
+        self.recv_running = False
+
+        # 关闭接收套接字
+        if hasattr(self, 'recv_sock'):
+            try:
+                self.recv_sock.close()
+            except:
+                pass
+
+        # 关闭发送套接字
+        if hasattr(self, 'sock'):
+            try:
+                self.sock.close()
+            except:
+                pass
 
 
 if __name__ == "__main__":
     traceroute = Traceroute()
 
-
-    # try:
-    #     traceroute.run()
-    # except KeyboardInterrupt:
-    #     print("\n跟踪已中断")
-    # finally:
-    #     traceroute.close()
+    try:
+        traceroute.run()
+    except KeyboardInterrupt:
+        print("\n跟踪已中断")
+    finally:
+        traceroute.close()
