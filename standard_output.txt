@@ -1,4 +1,56 @@
 {
+   'metadata': {
+        'target': 'www.example.com',
+        'ip_version': '4',
+        'timestamp': '2023-11-20 14:30:00',
+        'reached_target': True
+    },
+    1: {
+        'udp': {
+            'probes': [
+                {'rtt': 12.34, 'from': '192.168.1.1', 'reached': False},
+                {'rtt': 13.45, 'from': '192.168.1.1', 'reached': False}
+            ],
+            'stats': {
+                'count': 2, 'responses': 2, 'loss': 0.0,
+                'min': 12.34, 'max': 13.45, 'avg': 12.89
+            }
+        },
+        'tcp': { ... },  # 类似udp结构
+        'icmp': { ... }, # 类似udp结构
+        'extensions': {}  # 无扩展信息
+    },
+    2: {
+        'udp': { ... },
+        'tcp': { ... },
+        'icmp': {
+            'probes': [
+                {'rtt': 25.67, 'from': '10.0.0.1', 'reached': False},
+                {'rtt': None, 'from': None, 'reached': False}  # 超时情况
+            ],
+            'stats': {
+                'count': 2, 'responses': 1, 'loss': 0.5,
+                'min': 25.67, 'max': 25.67, 'avg': 25.67
+            }
+        },
+        'extensions': {
+            'mpls': [
+                {'label': 16000, 'tc': 0, 's': 1, 'ttl': 255}
+            ]
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+{
     'target': str                  # 目标IP
     'ip_protocol': str             # IP协议类型
     'protocol': str                # 传输层协议类型
@@ -35,3 +87,4 @@
     },
     ...
 }
+
