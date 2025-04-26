@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 from typing import Optional, List
 import random
-import json
 import os
 import platform
 
@@ -22,6 +21,8 @@ class Traceroute:
             print(f"Arguments: {e.args}")
             sys.exit(1)
 
+
+    def init(self):
         # Initialize basic parameters
         self._init_basic_parameters()
 
@@ -41,6 +42,7 @@ class Traceroute:
         self.probes_sent = {}
         self.recv_running = False
         self.lock = Lock()
+        print(self.__dict__)
 
     def _init_basic_parameters(self):
         """Initialize basic control parameters"""
@@ -128,7 +130,7 @@ class Traceroute:
         parser = argparse.ArgumentParser(description="Advanced Python Traceroute Implementation")
 
         # Target specification
-        target_group = parser.add_mutually_exclusive_group(required=True)
+        target_group = parser.add_mutually_exclusive_group(required=False)
         target_group.add_argument("host", nargs='?', help="Target hostname or IP address")
         target_group.add_argument("-i", "--input-file", help="File containing list of target hosts (one per line)")
 
@@ -274,6 +276,7 @@ class Traceroute:
 
             sock = socket.socket(family, socket.SOCK_RAW, proto)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
             sock.settimeout(self.timeout)
             sock.bind(('', 0))
 
@@ -371,22 +374,6 @@ class Traceroute:
             self._print_warning(f"Failed to resolve {host}: {e}")
             sys.exit(1)
 
-    def batch_trace(self):
-        """Perform traceroute for multiple targets"""
-        targets = self._get_target_list()
-
-        for target in targets:
-            print(f"\nTracing route to {target}")
-            self.dest_ip = self._resolve_hostname(target)
-            self.results = {}
-            self.probes_sent = {}
-
-            try:
-                self.run()
-                self._save_results(target)
-            except Exception as e:
-                self._print_warning(f"Failed to trace {target}: {e}")
-                continue
 
     def _get_target_list(self) -> List[str]:
         """Get list of targets from input file or single host"""
@@ -397,6 +384,7 @@ class Traceroute:
 
     def run(self):
         """Main traceroute execution"""
+        self.init()
         print(f"Traceroute to {self.options.host} ({self.dest_ip}), "
               f"max hops {self.max_hops}, {self.queries_per_hop} probes per hop")
 
@@ -433,6 +421,7 @@ class Traceroute:
         finally:
             self.close()
             self._display_final_results()
+            return self.results
 
     def _probe_hop(self, ttl: int):
         """Send all probes for a single hop"""
@@ -610,6 +599,7 @@ class Traceroute:
     def _receiver_thread(self):
         """Thread function for receiving responses"""
         self.recv_running = True
+        cnt = 0
 
         while self.recv_running:
             try:
@@ -919,19 +909,6 @@ class Traceroute:
             'reached_target': reached_target
         }
 
-    def _save_results(self, target: str):
-        """Save results to file"""
-        try:
-            safe_name = "".join(c if c.isalnum() else "_" for c in target)
-            filename = f"traceroute_{safe_name}_{time.strftime('%Y%m%d_%H%M%S')}.json"
-            path = os.path.join(self.output_dir, filename)
-
-            with open(path, 'w') as f:
-                json.dump(self.results, f, indent=2)
-
-            print(f"\nResults saved to {path}")
-        except Exception as e:
-            self._print_warning(f"Failed to save results: {e}")
 
     @staticmethod
     def _calculate_checksum(data: bytes) -> int:
@@ -1009,11 +986,7 @@ class Traceroute:
 if __name__ == "__main__":
     try:
         traceroute = Traceroute()
-
-        if traceroute.options.input_file:
-            traceroute.batch_trace()
-        else:
-            traceroute.run()
+        traceroute.run()
 
     except KeyboardInterrupt:
         print("\nTraceroute interrupted by user")
