@@ -10,6 +10,7 @@ from typing import Optional, List
 import random
 import os
 import platform
+from ip_geolocate import ip_to_lattitude_longitutde
 
 
 class Traceroute:
@@ -940,8 +941,62 @@ class Traceroute:
             try:
                 self.recv_sock.close()
             except:
-                pass
+                pass 
 
+    def process_hop(self, hop_ip:str):
+        # Called for each hop IP, looks up the geographic location, and records 
+        try:
+            lat, lon = ip_to_lattitude_longitutde(hop_ip)
+            print(f"{hop_ip} → lat={lat:.4f}, lon={lon:.4f}") 
+        except Exception as e:
+            print(f"Failed to geo-locate {hop_ip}: {e}")
+
+    def run(self):
+        self.init()
+        print(f"Traceroute to {self.options.host} ({self.dest_ip}), "
+              f"max hops {self.max_hops}, {self.queries_per_hop} probes per hop")
+        
+        try:
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                recv_future = executor.submit(self._receiver_thread)
+
+                start_time = time.time()
+                while not self.recv_running and (time.time() - start_time) < 1:
+                    time.sleep(0, 1)
+                if not self.recv_running:
+                    raise RuntimeError("receiver thread fail to start")
+                
+                try:
+                    for ttl in range(self.first_ttl, self.first_ttl + self.max_hops):
+                        # Sends and collect Probes
+                        self._probe_hop(ttl)
+
+                        # This part grabs the first responsding IP (if there is any IP)
+                        first_ip = None
+                        for proto in self.probe_sequence:
+                            probes = self.results[ttl][proto]['probes']
+                            if probes and probes[-1]['from']:
+                                first_ip = probes[-1]['from']
+                                break
+
+                        # Geo lookup
+                        if first_ip:
+                            self.process_hop(first_ip)
+
+                        if self._check_target_reached(ttl):
+                            break
+
+                except KeyboardInterrupt:
+                    print("\nTrace interrupted by User")
+                finally:
+                    self.recv_running = False 
+                    recv_future.result(timeout=2)
+        except Exception as e:
+            self._print_warning(f"Tracerouter fai;ed: {e}")
+        finally:
+            self.close()
+            self._display_final_results
+            return self.results
 
 if __name__ == "__main__":
     try:
