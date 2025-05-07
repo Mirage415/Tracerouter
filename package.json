@@ -5,6 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "admin-start": "powershell -Command \"Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \\\"cd \\\\\\\"%CD%\\\\\\\"; npx electron .\\\"' -Verb RunAs\"",
+    "admin-start-mac": "sudo npx electron .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "electron-builder --win",
     "build-all": "electron-builder -mwl",

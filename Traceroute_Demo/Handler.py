@@ -2,8 +2,27 @@
 import os
 import json
 import csv
+import sys
 from typing import List, Dict, Union
-from My_traceroute_fixed import Traceroute  # 假设您的traceroute类在traceroute.py中
+
+# 尝试多种导入策略
+try:
+    # 尝试从当前目录导入
+    from .My_traceroute_fixed import Traceroute
+except (ImportError, ModuleNotFoundError):
+    try:
+        # 尝试从绝对路径导入
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        if current_dir not in sys.path:
+            sys.path.insert(0, current_dir)
+        from My_traceroute_fixed import Traceroute
+    except (ImportError, ModuleNotFoundError):
+        # 再次尝试通过相对路径查找模块
+        try:
+            sys.path.insert(0, os.path.dirname(__file__))
+            from My_traceroute_fixed import Traceroute
+        except (ImportError, ModuleNotFoundError) as e:
+            raise ImportError(f"无法导入Traceroute模块，请确保My_traceroute_fixed.py文件在正确的位置: {e}")
 
 
 class TracerouteHandler:
