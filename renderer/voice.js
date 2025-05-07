@@ -9,7 +9,7 @@ function stopRecording(){
 
 
 let mic;
-let curves = 100;    // 曲线条数
+let curves = 150;    // 曲线条数
 let cx, cy;         // 曲线首尾固定点（中心）
 let angles = [];    // 每条曲线的基准方向角
 let baseRs = [];    // 每条曲线的基准半径
@@ -17,6 +17,7 @@ let phases1 = [], phases2 = [];   // 两组相位，用于控制两个控制点
 let speeds1 = [], speeds2 = [];   // 相位增速
 let textResult = "Listening..."; // 用于显示语音识别结果
 let isRecording = false;
+
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -49,8 +50,27 @@ function setup() {
   stopButton.mousePressed(stopRecording);
 }
 
+// function getCol(col, range, step){ // range is a array with two margins, color is an int
+//   let min = range[0] < range[1] ? range[0] : range[1]
+//   let max = range[1] >= range[0] ? range[1] : range[0]
+//   if (! (col < min || col > max)){
+//       col += step;
+//       return col;
+//   }
+// }
+
 function draw() {
   background(20);
+  // var colLst = [];
+  // r in (5, 250)
+  // g in (201, 5, --)
+  // b in (250, 74, --)
+
+  // var lowCol = rgb(5, 201, 250);
+  // var highCol = rgb(250, 5, 74);
+  let range_r = [5, 250];
+  let range_g = [201, 5];
+  let range_b = [250, 74];
 
   // 获取响度并映射到最大振幅
   let vol = mic.getLevel();
@@ -63,8 +83,9 @@ function draw() {
 
     // 计算两个控制点相对于中心的偏移半径
     let r = baseRs[i];
-    let off1 = 100 * sin(phases1[i]) * maxAmp + random(5,15);
-    let off2 = 100 * sin(phases2[i]) * maxAmp + random(5,15);
+    
+    let off1 = 50 * sin(phases1[i]) * maxAmp + 5 * sin(random(5,15));
+    let off2 = 50 * sin(phases2[i]) * maxAmp + 5 * sin(random(5,15));
 
     // 控制点 1 坐标
     let cp1x = cx + cos(angles[i]) * (r + off1);
@@ -73,7 +94,15 @@ function draw() {
     // 控制点 2 坐标（同方向、不同相位振荡）
     let cp2x = cx + cos(angles[i]) * (r + off2);
     let cp2y = cy + sin(angles[i]) * (r + off2);
+    
+    // let colR = 5 + maxAmp;
+    // let colG = 201 - maxAmp;
+    // let colB = 250 - maxAmp;
     stroke('#05c9fa');
+    // let waveColor = lerpColor(lowCol, highCol, constrain(vol / 0.3, 0, 1));
+    // stroke(waveColor);
+    // stroke(getCol(5, [5, 250]), getCol())
+
     // 绘制首尾都是 (cx, cy) 的贝塞尔曲线
     bezier(cx, cy, cp1x, cp1y, cp2x, cp2y, cx, cy);
   }

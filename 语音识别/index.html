@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>ml5/p5 语音转文字 + 波形可视化</title>
+  <!-- 基础库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/IDMNYU/p5.js-speech@0.0.3/lib/p5.speech.js"></script>
+  <style>
+    body { margin: 0; padding: 0; overflow: hidden; background: #111; color: #fff; }
+    #ui-panel { position: absolute; left: 20px; top: 20px; z-index: 10; }
+    #result { margin-top: 10px; font-size: 1.2em; }
+  </style>
+</head>
+<body>
+  <div id="ui-panel">
+    <button id="startBtn">🎙️ 开始识别</button>
+    <h3></h3>
+    <div id="result">（尚未开始）</div>
+  </div>
+  <script>
+    // 语音识别部分
+    let speechRec, mic;
+    let lang = 'en-US'; // 可切换 'zh-CN'
+    let textResult = "Listening...";
+
+    document.getElementById('startBtn').onclick = async () => {
+      await getAudioContext().resume();
+      mic = new p5.AudioIn();
+      await mic.start();
+      speechRec = new p5.SpeechRec(lang, gotSpeech);
+      speechRec.start(true, false);
+      document.getElementById('result').innerText = '';
+      startBtn.disabled = true; 
+    };
+
+    function gotSpeech() {
+      if (speechRec.resultValue) {
+        const txt = speechRec.resultString.trim();
+        textResult = txt;
+        document.getElementById('result').innerText = txt;
+      }
+    }
+
+    // 波形动画部分
+    let curves = 150;
+    let cx, cy;
+    let angles = [], baseRs = [], phases1 = [], phases2 = [], speeds1 = [], speeds2 = [];
+
+    function setup() {
+      createCanvas(windowWidth, windowHeight);
+      cx = width / 2;
+      cy = height / 2;
+      for (let i = 0; i < curves; i++) {
+        angles.push(map(i, 0, curves, 0, TWO_PI));
+        baseRs.push(random(height * 0.15, height * 0.3));
+        phases1.push(random(TWO_PI));
+        phases2.push(random(TWO_PI));
+        speeds1.push(random(0.02, 0.08));
+        speeds2.push(random(0.02, 0.08));
+      }
+      stroke(255);
+    }
+
+    function draw() {
+      background(20);
+      let vol = mic ? mic.getLevel() : 0;
+      let maxAmp = map(vol, 0, 0.3, 0, height * 0.15);
+      for (let i = 0; i < curves; i++) {
+        phases1[i] += speeds1[i];
+        phases2[i] += speeds2[i];
+        let r = baseRs[i];
+        let off1 = 50 * sin(phases1[i]) * maxAmp + 5 * sin(random(5,15));
+        let off2 = 50 * sin(phases2[i]) * maxAmp + 5 * sin(random(5,15));
+        let cp1x = cx + cos(angles[i]) * (r + off1);
+        let cp1y = cy + sin(angles[i]) * (r + off1);
+        let cp2x = cx + cos(angles[i]) * (r + off2);
+        let cp2y = cy + sin(angles[i]) * (r + off2);
+        stroke('#05c9fa');
+        bezier(cx, cy, cp1x, cp1y, cp2x, cp2y, cx, cy);
+      }
+      // 显示语音识别结果
+      fill(255);
+      textSize(24);
+      text("Speech-to-Text Result:", 20, 100);
+      text(textResult, 20, 140);
+    }
+
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight);
+      cx = width / 2;
+      cy = height / 2;
+    }
+  </script>
+</body>
+</html>
