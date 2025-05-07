@@ -4,12 +4,8 @@
 // Cesium.Ion.defaultAccessToken = 'YOUR_CESIUM_ION_TOKEN';
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
-  // 方法 A：使用 Cesium Ion 影像
-  // imageryProvider: new Cesium.IonImageryProvider({ assetId: 2 }),
-  // 方法 B：使用 OpenStreetMap 免费切片（无需 token）
-  imageryProvider: new Cesium.UrlTemplateImageryProvider({
-    url: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    credit: '© OpenStreetMap contributors'
+  imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+    url: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'
   }),
   baseLayerPicker: false,
   geocoder: true,

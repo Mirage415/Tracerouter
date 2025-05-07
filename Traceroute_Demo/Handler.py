@@ -234,8 +234,8 @@ if __name__ == "__main__":
         "extensions": False  # 记录扩展信息
     }
     # 处理输入文件
-    input_file = "test_target_normal.txt"  # 或 targets.csv
-    Handler_run(options, input_file, output_format="txt",output_dir="Traceroute_try")
+    input_file = "/Users/mac/Documents/GitHub/Tracerouter/Traceroute_Demo/test_target_normal.txt"  # 或 targets.csv
+    Handler_run(options, input_file,output_dir="traceroute_results")
 
 
 

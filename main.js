@@ -98,7 +98,7 @@ ipcMain.on('run-traceroute', (event, fullCommand) => {
   event.sender.send('traceroute-output', `开始执行目标为 ${targetDomain} 的路由追踪...\n`);
 
   // 设置Python脚本路径
-  const handlerScriptPath = getResourcePath(path.join('python', 'handler.py'));
+  const handlerScriptPath = getResourcePath(path.join('Traceroute_Demo', 'Handler.py'));
   const geolocateScriptPath = getResourcePath(path.join('Traceroute_Demo', 'ip_geolocate.py'));
 
   // 创建handler进程
@@ -151,7 +151,7 @@ ipcMain.on('run-traceroute', (event, fullCommand) => {
         }
       });
     } else {
-      event.sender.send('traceroute-output', 'handler.py脚本执行出错（无法生成traceroute JSON）。\n');
+      event.sender.send('traceroute-output', 'Handler.py脚本执行出错（无法生成traceroute JSON）。\n');
     }
   });
 });
