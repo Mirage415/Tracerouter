@@ -197,24 +197,32 @@ class TracerouteHandler:
 
         return all_results
 
+def Handler_run(options:dict, input_file:str, output_format="json", output_dir="traceroute_results"):
+    handler = TracerouteHandler(output_dir=output_dir)
+    all_results = handler.batch_trace(input_file, options, output_format=output_format)
+    print("\nBatch tracing completed. Results saved to:", handler.output_dir)
+
 
 # 使用示例
 if __name__ == "__main__":
+
+
+
     # 示例选项 (对应traceroute命令行参数)
     options = {
-        "protocol": "udp",  # 使用UDP探测
+        "probe_sequence":["udp", "tcp", "icmp"],
         "queries": 3,  # 每跳发送3个探测包
         "max_hops": 30,  # 最大跳数
         "wait": 5000,  # 等待时间(ms)
         "no_resolve": False,  # 解析主机名
         "extensions": False  # 记录扩展信息
     }
-
-    handler = TracerouteHandler(output_dir="traceroute_results")
-
     # 处理输入文件
-
     input_file = "test_target_normal.txt"  # 或 targets.csv
-    all_results = handler.batch_trace(input_file, options, output_format="json")
+    Handler_run(options, input_file, output_format="txt")
 
-    print("\nBatch tracing completed. Results saved to:", handler.output_dir)
+
+
+    # series["tcp", "udp", "icmp", "tcp"]
+
+
