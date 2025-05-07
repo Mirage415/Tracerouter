@@ -1,0 +1,4 @@
+owner: Mirage415
+repo: Tracerouter
+provider: github
+updaterCacheDirName: tracerouter-updater

@@ -1,24 +1,496 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>p5 Voice 测试</title>
-  <style>body{margin:0;}</style>
-  
+<html lang="zh-CN">
 
-  <!-- 1. p5 核心 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
-  <!-- 2. p5.sound（麦克风、FFT） -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+<head>
+  <meta charset="utf-8" />
+  <title>语音控制Traceroute可视化</title>
+  <!-- 基础库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/IDMNYU/p5.js-speech@0.0.3/lib/p5.speech.js"></script>
-  <!-- 3. 你的声波脚本，确保和 index.html 在同一目录 -->
-  <script src="./voice.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    #ui-panel {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 10px;
+      width: 300px;
+    }
+
+    #control-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background: #05c9fa;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+
+    #result {
+      margin-top: 10px;
+      font-size: 1.2em;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 5px;
+      min-height: 1.5em;
+    }
+
+    #output-panel {
+      position: absolute;
+      left: 20px;
+      top: 180px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 10px;
+      width: 400px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    #traceOutput {
+      font-family: monospace;
+      white-space: pre-wrap;
+      font-size: 0.9em;
+      color: #ddd;
+    }
+
+    #debugPanel {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 10px;
+      width: 300px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    #debugOutput {
+      font-family: monospace;
+      white-space: pre-wrap;
+      font-size: 0.9em;
+      color: #0f0;
+    }
+
+    h3 {
+      margin-top: 0;
+      color: #05c9fa;
+    }
+
+    #rawInput {
+      margin-top: 10px;
+      width: 90%;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 5px;
+      color: white;
+    }
+
+    #submitBtn {
+      margin-top: 5px;
+    }
+  </style>
 </head>
+
 <body>
-  
-  <!-- 运行时看一下控制台是否加载了 voice.js -->
+  <div id="ui-panel">
+    <h3>语音控制Traceroute</h3>
+    <div id="control-buttons">
+      <button id="startBtn">🎙️ 开始识别</button>
+      <button id="stopBtn" disabled>⏹️ 停止识别</button>
+      <button id="testBtn">测试API</button>
+    </div>
+    <div id="result">（尚未开始）</div>
+    <p style="font-size:0.8em;color:#ccc;">直接说出域名，例如："google.com" 或 "百度"</p>
+
+    <!-- 添加手动输入框 -->
+    <input type="text" id="rawInput" placeholder="或直接输入域名...">
+    <button id="submitBtn">提交</button>
+  </div>
+
+  <div id="output-panel">
+    <h3>执行结果：</h3>
+    <div id="traceOutput"></div>
+  </div>
+
+  <!-- 新增调试信息面板 -->
+  <div id="debugPanel">
+    <h3>调试信息：</h3>
+    <div id="debugOutput">等待调试信息...</div>
+  </div>
+
   <script>
-    console.log('如果你看到了这条消息，index.html 加载成功');
+    // 添加调试日志函数
+    function debugLog(message) {
+      const debugElem = document.getElementById('debugOutput');
+      const timestamp = new Date().toLocaleTimeString();
+      debugElem.innerHTML += `[${timestamp}] ${message}\n`;
+      debugElem.scrollTop = debugElem.scrollHeight;
+      console.log(`[DEBUG] ${message}`);
+    }
+
+    // 语音识别部分
+    let speechRec;
+    let mic;
+    let lang = 'zh-CN'; // 可切换 'en-US' 或 'zh-CN'
+    let textResult = "等待语音输入...";
+    let isRecognizing = false;
+    let nativeSpeechRecognition = null;
+
+    // 处理域名格式化
+    function formatDomain(text) {
+      // 移除可能存在的"traceroute"关键字
+      let domain = text.toLowerCase().replace(/traceroute\s+/g, '').trim();
+
+      // 移除尾部的标点符号（如句号、逗号、感叹号等）
+      domain = domain.replace(/[.,!?;:'"，。！？；：''""）】》〉）]\s*$/g, '').trim();
+
+      // 移除前后的标点符号和特殊字符
+      domain = domain.replace(/^[\s"'《【（\['"\(]+|[\s"'》】）\]'"\)]+$/g, '').trim();
+
+      // 处理常见域名简写
+      const domainMap = {
+        '谷歌': 'google.com',
+        '百度': 'baidu.com',
+        'google': 'google.com',
+        'baidu': 'baidu.com',
+        '必应': 'bing.com',
+        'bing': 'bing.com',
+        '雅虎': 'yahoo.com',
+        'yahoo': 'yahoo.com',
+        '淘宝': 'taobao.com',
+        'taobao': 'taobao.com',
+        '微软': 'microsoft.com',
+        'microsoft': 'microsoft.com',
+        '腾讯': 'qq.com',
+        '网易': '163.com'
+      };
+
+      // 检查是否是常见域名简写
+      if (domainMap[domain]) {
+        domain = domainMap[domain];
+      }
+
+      // 如果没有.com, .cn等后缀，自动添加.com
+      if (!/\.\w+$/.test(domain)) {
+        domain = domain + '.com';
+      }
+
+      // 确保域名格式正确（只包含字母、数字、点和连字符）
+      if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain)) {
+        // 尝试修复常见问题
+        domain = domain
+          // 移除所有空格
+          .replace(/\s+/g, '')
+          // 将多个点缩减为一个点
+          .replace(/\.{2,}/g, '.')
+          // 清理末尾的点
+          .replace(/\.$/, '');
+      }
+
+      debugLog(`原始输入: "${text}" -> 处理后域名: "${domain}"`);
+      return domain;
+    }
+
+    // 尝试使用原生SpeechRecognition API
+    function setupNativeSpeechRecognition() {
+      try {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+          debugLog("使用原生SpeechRecognition API");
+          nativeSpeechRecognition = new SpeechRecognition();
+          nativeSpeechRecognition.continuous = true;
+          nativeSpeechRecognition.interimResults = false;
+          nativeSpeechRecognition.lang = lang;
+
+          nativeSpeechRecognition.onstart = () => {
+            debugLog("原生语音识别已启动");
+            isRecognizing = true;
+            document.getElementById('result').innerText = '正在聆听(原生API)...';
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+          };
+
+          nativeSpeechRecognition.onresult = (event) => {
+            debugLog("原生语音识别收到结果");
+            const last = event.results.length - 1;
+            const txt = event.results[last][0].transcript.trim();
+
+            const confidence = event.results[last][0].confidence;
+            debugLog(`识别文本: "${txt}" (置信度: ${confidence.toFixed(2)})`);
+
+            textResult = txt;
+            document.getElementById('result').innerText = txt;
+
+            processCommand(txt);
+          };
+
+          nativeSpeechRecognition.onerror = (event) => {
+            debugLog(`原生语音识别错误: ${event.error}`);
+            document.getElementById('result').innerText = `错误: ${event.error}`;
+          };
+
+          nativeSpeechRecognition.onend = () => {
+            debugLog("原生语音识别结束");
+            if (isRecognizing) {
+              // 如果仍在识别状态但API结束了，尝试重启
+              debugLog("尝试重启原生语音识别...");
+              nativeSpeechRecognition.start();
+            }
+          };
+
+          return true;
+        }
+      } catch (e) {
+        debugLog(`设置原生语音识别失败: ${e.message}`);
+      }
+      return false;
+    }
+
+    // 检查是否有Electron API可用（在打包应用中运行）
+    const hasElectronAPI = window.api && window.api.runTraceroute && window.api.onOutput;
+    debugLog(`Electron API 可用: ${hasElectronAPI}`);
+    if (!hasElectronAPI) {
+      debugLog("警告: Electron API 不可用，部分功能将无法使用");
+    }
+
+    // 处理识别的命令
+    function processCommand(txt) {
+      // 统一为域名格式
+      const domain = formatDomain(txt);
+      debugLog(`处理后的域名: ${domain}`);
+
+      // 构造完整的traceroute命令
+      const command = `traceroute ${domain}`;
+
+      if (hasElectronAPI) {
+        debugLog(`执行命令: ${command}`);
+        document.getElementById('traceOutput').innerHTML = `执行: ${command}\n正在追踪路由...\n`;
+        // 通过preload.js中暴露的API调用主进程
+        window.api.runTraceroute(command);
+      } else {
+        debugLog(`无法执行命令: Electron API不可用`);
+        document.getElementById('traceOutput').innerHTML = "错误: Electron API不可用，无法执行命令\n";
+      }
+    }
+
+    document.getElementById('startBtn').onclick = async () => {
+      try {
+        debugLog("尝试开始语音识别...");
+
+        // 尝试使用原生语音识别
+        if (setupNativeSpeechRecognition()) {
+          nativeSpeechRecognition.start();
+          return;
+        }
+
+        // 回退到p5.speech
+        debugLog("回退到p5.speech语音识别");
+        await getAudioContext().resume();
+        debugLog("音频上下文已恢复");
+
+        mic = new p5.AudioIn();
+        await mic.start();
+        debugLog("麦克风已启动");
+
+        // 创建新的语音识别实例
+        speechRec = new p5.SpeechRec(lang, gotSpeech);
+        debugLog(`创建语音识别实例，语言: ${lang}`);
+
+        // 开始连续识别 (continuous = true, interim = false)
+        speechRec.start(true, false);
+        debugLog("语音识别已启动，连续模式");
+
+        isRecognizing = true;
+        document.getElementById('result').innerText = '正在聆听(p5.speech)...';
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+      } catch (error) {
+        debugLog(`错误: ${error.message}`);
+        console.error("语音识别错误:", error);
+        document.getElementById('result').innerText = `启动失败: ${error.message}`;
+      }
+    };
+
+    document.getElementById('stopBtn').onclick = () => {
+      debugLog("停止语音识别");
+
+      if (nativeSpeechRecognition && isRecognizing) {
+        try {
+          nativeSpeechRecognition.stop();
+          debugLog("原生语音识别已停止");
+        } catch (e) {
+          debugLog(`停止原生语音识别出错: ${e.message}`);
+        }
+      }
+
+      if (speechRec) {
+        // 尝试停止语音识别
+        try {
+          speechRec.stop();
+          debugLog("p5语音识别已停止");
+        } catch (e) {
+          debugLog(`停止p5语音识别出错: ${e.message}`);
+          console.log("停止语音识别时出错:", e);
+        }
+      }
+
+      isRecognizing = false;
+      document.getElementById('result').innerText = '（已停止）';
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = true;
+      textResult = "语音识别已停止";
+    };
+
+    // 测试API按钮
+    document.getElementById('testBtn').onclick = () => {
+      debugLog("测试按钮点击");
+      const testDomain = "google.com";
+      document.getElementById('result').innerText = testDomain;
+      processCommand(testDomain);
+    };
+
+    // 手动输入提交按钮
+    document.getElementById('submitBtn').onclick = () => {
+      const inputField = document.getElementById('rawInput');
+      const domain = inputField.value.trim();
+      if (domain) {
+        debugLog(`手动输入域名: ${domain}`);
+        document.getElementById('result').innerText = domain;
+        processCommand(domain);
+        // 清空输入框
+        inputField.value = '';
+      } else {
+        debugLog("未输入域名");
+      }
+    };
+
+    // 允许回车键提交
+    document.getElementById('rawInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('submitBtn').click();
+      }
+    });
+
+    function gotSpeech() {
+      debugLog("接收到p5语音识别结果");
+      if (speechRec.resultValue && isRecognizing) {
+        const txt = speechRec.resultString.trim();
+        debugLog(`p5识别文本: "${txt}"`);
+        textResult = txt;
+        document.getElementById('result').innerText = txt;
+
+        processCommand(txt);
+      } else {
+        debugLog(`p5无效结果或识别已停止: resultValue=${speechRec.resultValue}, isRecognizing=${isRecognizing}`);
+      }
+    }
+
+    // 如果在Electron环境中，设置接收输出的回调
+    if (hasElectronAPI) {
+      debugLog("设置Electron API输出回调");
+      window.api.onOutput((data) => {
+        debugLog(`接收到输出: ${data.substring(0, 50)}...`);
+        const outputElem = document.getElementById('traceOutput');
+        outputElem.innerHTML += data;
+        outputElem.scrollTop = outputElem.scrollHeight; // 自动滚动到底部
+      });
+    } else {
+      document.getElementById('traceOutput').innerHTML = "未检测到Electron API，无法执行traceroute命令。";
+    }
+
+    // 检查浏览器语音识别支持
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      debugLog("浏览器支持原生语音识别API");
+    } else {
+      debugLog("警告: 浏览器不支持原生语音识别API，将尝试使用p5.speech");
+    }
+
+    // 波形动画部分
+    let curves = 150;
+    let cx, cy;
+    let angles = [], baseRs = [], phases1 = [], phases2 = [], speeds1 = [], speeds2 = [];
+
+    function setup() {
+      createCanvas(windowWidth, windowHeight);
+      cx = width / 2;
+      cy = height / 2;
+      for (let i = 0; i < curves; i++) {
+        angles.push(map(i, 0, curves, 0, TWO_PI));
+        baseRs.push(random(height * 0.15, height * 0.3));
+        phases1.push(random(TWO_PI));
+        phases2.push(random(TWO_PI));
+        speeds1.push(random(0.02, 0.08));
+        speeds2.push(random(0.02, 0.08));
+      }
+      stroke(255);
+      debugLog("p5.js画布初始化完成");
+    }
+
+    function draw() {
+      background(20);
+      let vol = mic ? mic.getLevel() : 0;
+      // 偶尔记录音量级别
+      if (frameCount % 60 === 0 && mic) {
+        debugLog(`当前麦克风音量: ${vol.toFixed(4)}`);
+      }
+
+      let maxAmp = map(vol, 0, 0.3, 0, height * 0.15);
+      for (let i = 0; i < curves; i++) {
+        phases1[i] += speeds1[i];
+        phases2[i] += speeds2[i];
+        let r = baseRs[i];
+        let off1 = 50 * sin(phases1[i]) * maxAmp + 5 * sin(random(5, 15));
+        let off2 = 50 * sin(phases2[i]) * maxAmp + 5 * sin(random(5, 15));
+        let cp1x = cx + cos(angles[i]) * (r + off1);
+        let cp1y = cy + sin(angles[i]) * (r + off1);
+        let cp2x = cx + cos(angles[i]) * (r + off2);
+        let cp2y = cy + sin(angles[i]) * (r + off2);
+        stroke('#05c9fa');
+        bezier(cx, cy, cp1x, cp1y, cp2x, cp2y, cx, cy);
+      }
+    }
+
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight);
+      cx = width / 2;
+      cy = height / 2;
+      debugLog("窗口大小调整，画布已重置");
+    }
+
+    // 页面加载完成
+    window.onload = function () {
+      debugLog("页面加载完成");
+    };
   </script>
 </body>
+
 </html>

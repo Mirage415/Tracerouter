@@ -1,0 +1,26 @@
+<!-- globe_cesium.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cesium Traceroute Globe</title>
+  <!-- 1) Cesium 核心脚本 -->
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.94/Build/Cesium/Cesium.js"></script>
+  <!-- 2) Cesium 控件样式 -->
+  <link
+    href="https://cesium.com/downloads/cesiumjs/releases/1.94/Build/Cesium/Widgets/widgets.css"
+    rel="stylesheet"
+  />
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <!-- 3) 地球容器 -->
+  <div id="cesiumContainer"></div>
+  <!-- 4) 你的业务逻辑 -->
+  <script src="globe_cesium.js"></script>
+</body>
+</html>

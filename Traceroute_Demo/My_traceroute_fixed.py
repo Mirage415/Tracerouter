@@ -1,3 +1,4 @@
+
 import argparse
 import socket
 import time
@@ -10,11 +11,18 @@ from typing import Optional, List
 import random
 import os
 import platform
-from ip_geolocate import ip_to_lattitude_longitutde
 
 
 class Traceroute:
     def __init__(self):
+
+        # Initialize state variables
+        self.results = {}
+        self.probes_sent = {}
+        self.recv_running = False
+        self.lock = Lock()
+        self.recv_sock = None
+        self.sock = None
         try:
             self.options = self._parse_args()
         except SystemExit as e:
@@ -34,20 +42,12 @@ class Traceroute:
         self._init_output_parameters()
 
         # Initialize sockets
-        self.sock = None
-        self.recv_sock = None
         self._init_sockets()
 
-        # Initialize state variables
-        self.results = {}
-        self.probes_sent = {}
-        self.recv_running = False
-        self.lock = Lock()
-        print(self.__dict__)
+        # print(self.__dict__)
 
     def _init_basic_parameters(self):
         self.queries_per_hop = self.options.queries
-        self.queries_per_send = self.options.sim_queries
         self.timeout = self.options.wait / 1000.0
         self.min_send_interval = self.options.z / 1000.0
         self.max_hops = self.options.max_hops
@@ -60,9 +60,10 @@ class Traceroute:
 
     def _init_network_parameters(self):
         # IP protocol selection
-        self.ip_protocol = "6" if self.options.ipv6 else "4"
+        self.ip_protocol = "6" if self.options.ipv6 else "4" if self.options.ipv4 else None
+        self.ip_protocol = '4'# 尚未支持ipv6，因此仅设定为ipv4
         self.dest_ip = self._resolve_hostname(self.options.host)
-        self.ip_protocol = self._decide_ip_protocol()
+        self.ip_protocol = self._decide_ip_protocol()  # 若未指定ip协议，则根据DNS返回的ipv地址类型设定ip协议
 
         # Source IP handling
         self.src_ip = self.options.source
@@ -81,8 +82,7 @@ class Traceroute:
         self.packet_size = self.options.packet_size
 
     def _init_output_parameters(self):
-        os.makedirs(self.options.output_dir, exist_ok=True)
-        self.output_dir = self.options.output_dir
+
         self.probe_sequence = self.options.probe_sequence
         self.series_count = self.options.series_count
         self.series_interval = self.options.series_interval / 1000.0
@@ -164,12 +164,10 @@ class Traceroute:
         # Timing and probing options
         parser.add_argument("-w", "--wait", type=int, default=5000,
                             help="Wait time for response in milliseconds")
-        parser.add_argument("-q", "--queries", type=int, default=3,
-                            help="Number of probes per hop")
+        parser.add_argument("-q", "--queries", type=int, default=1,
+                            help="Number of probes that every series will sent for any protocol contains.")
         parser.add_argument("-z", type=int, default=0,
                             help="Minimum interval between probes in milliseconds")
-        parser.add_argument("-N", "--sim-queries", type=int, default=16,
-                            help="Number of probes to send simultaneously")
         parser.add_argument("--series-count", type=int, default=1,
                             help="Number of probe series per hop")
         parser.add_argument("--series-interval", type=int, default=100,
@@ -182,8 +180,6 @@ class Traceroute:
                             help="Verbose output")
         parser.add_argument("-e", "--extensions", action="store_true",
                             help="Show ICMP extensions")
-        parser.add_argument("-o", "--output-dir", default="./results",
-                            help="Output directory for results")
         parser.add_argument("-S", "--simulate", action="store_true",
                             help="Simulation mode (don't actually send packets)")
         parser.add_argument("--mtu", action="store_true",
@@ -194,7 +190,6 @@ class Traceroute:
         # Post-processing and validation
         if args.mtu:
             args.dont_fragment = True
-            args.sim_queries = 1
 
         # Validate numeric ranges
         for param in [(args.tos, 0, 255, "TOS"),
@@ -204,7 +199,6 @@ class Traceroute:
                       (args.sport, 1, 65535, "Source port") if args.sport else (None, None, None, None),
                       (args.wait, 0, None, "Wait time"),
                       (args.queries, 1, None, "Queries per hop"),
-                      (args.sim_queries, 1, None, "Simultaneous queries"),
                       (args.z, 0, None, "Probe interval")]:
             if param[0] is not None and (param[0] < param[1] or (param[2] is not None and param[0] > param[2])):
                 parser.error(f"{param[3]} must be between {param[1]} and {param[2]} (got {param[0]})")
@@ -225,7 +219,7 @@ class Traceroute:
 
     def _create_send_socket(self) -> socket.socket:
         if self.protocol == 'tcp':
-            trans_protocol = socket.SOCK_RAW
+            trans_protocol = socket.SOCK_STREAM
             ip_proto = socket.IPPROTO_TCP
         elif self.protocol == 'udp':
             trans_protocol = socket.SOCK_DGRAM
@@ -389,6 +383,7 @@ class Traceroute:
 
                 try:
                     # Send probes for each TTL
+
                     for ttl in range(self.first_ttl, self.first_ttl + self.max_hops):
                         self._probe_hop(ttl)
 
@@ -941,62 +936,8 @@ class Traceroute:
             try:
                 self.recv_sock.close()
             except:
-                pass 
+                pass
 
-    def process_hop(self, hop_ip:str):
-        # Called for each hop IP, looks up the geographic location, and records 
-        try:
-            lat, lon = ip_to_lattitude_longitutde(hop_ip)
-            print(f"{hop_ip} → lat={lat:.4f}, lon={lon:.4f}") 
-        except Exception as e:
-            print(f"Failed to geo-locate {hop_ip}: {e}")
-
-    def run(self):
-        self.init()
-        print(f"Traceroute to {self.options.host} ({self.dest_ip}), "
-              f"max hops {self.max_hops}, {self.queries_per_hop} probes per hop")
-        
-        try:
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                recv_future = executor.submit(self._receiver_thread)
-
-                start_time = time.time()
-                while not self.recv_running and (time.time() - start_time) < 1:
-                    time.sleep(0, 1)
-                if not self.recv_running:
-                    raise RuntimeError("receiver thread fail to start")
-                
-                try:
-                    for ttl in range(self.first_ttl, self.first_ttl + self.max_hops):
-                        # Sends and collect Probes
-                        self._probe_hop(ttl)
-
-                        # This part grabs the first responsding IP (if there is any IP)
-                        first_ip = None
-                        for proto in self.probe_sequence:
-                            probes = self.results[ttl][proto]['probes']
-                            if probes and probes[-1]['from']:
-                                first_ip = probes[-1]['from']
-                                break
-
-                        # Geo lookup
-                        if first_ip:
-                            self.process_hop(first_ip)
-
-                        if self._check_target_reached(ttl):
-                            break
-
-                except KeyboardInterrupt:
-                    print("\nTrace interrupted by User")
-                finally:
-                    self.recv_running = False 
-                    recv_future.result(timeout=2)
-        except Exception as e:
-            self._print_warning(f"Tracerouter fai;ed: {e}")
-        finally:
-            self.close()
-            self._display_final_results
-            return self.results
 
 if __name__ == "__main__":
     try:

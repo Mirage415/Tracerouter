@@ -1,0 +1,9 @@
+Traceroute results for www.baidu.com
+==================================================
+
+Target: 180.101.51.73
+Protocol: udp
+IP Version: 4
+Timestamp: 2025-05-07 12:53:52
+Reached Target: No
+

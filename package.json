@@ -1,17 +1,28 @@
 {
   "name": "tracerouter",
   "version": "1.0.0",
-  "description": "",
+  "description": "语音控制Traceroute可视化应用",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "electron-builder --win",
+    "build-all": "electron-builder -mwl",
+    "build-win": "electron-builder --win",
+    "build-mac": "electron-builder --mac",
+    "build-linux": "electron-builder --linux"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Mirage415/Tracerouter.git"
   },
-  "keywords": [],
+  "keywords": [
+    "traceroute",
+    "cesium",
+    "visualization",
+    "electron",
+    "speech-recognition"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -19,9 +30,85 @@
   },
   "homepage": "https://github.com/Mirage415/Tracerouter#readme",
   "devDependencies": {
-    "electron": "^35.2.0"
+    "electron": "^35.2.0",
+    "electron-builder": "^24.9.1"
   },
   "dependencies": {
     "openai": "^4.95.1"
+  },
+  "build": {
+    "appId": "com.tracerouter.app",
+    "productName": "Tracerouter",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/.*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,yarn-error.log}"
+    ],
+    "extraResources": [
+      {
+        "from": "python",
+        "to": "python",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "Traceroute_Demo",
+        "to": "Traceroute_Demo",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "globe_cesium.html",
+        "to": "globe_cesium.html"
+      },
+      {
+        "from": "renderer",
+        "to": "renderer",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.icns"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Network"
+    },
+    "asar": true,
+    "asarUnpack": [
+      "python/**/*",
+      "Traceroute_Demo/**/*"
+    ]
   }
 }

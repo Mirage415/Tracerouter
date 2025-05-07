@@ -1,0 +1,9 @@
+Traceroute results for google.com
+==================================================
+
+Target: 142.250.196.206
+Protocol: udp
+IP Version: 4
+Timestamp: 2025-05-07 12:53:51
+Reached Target: No
+
