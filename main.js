@@ -61,6 +61,26 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
+  // 在Mac上请求麦克风权限
+  if (process.platform === 'darwin') {
+    // 仅在Mac上存在此API
+    try {
+      if (app.systemPreferences && app.systemPreferences.askForMediaAccess) {
+        app.systemPreferences.askForMediaAccess('microphone')
+          .then(granted => {
+            console.log('麦克风权限:', granted ? '已授予' : '已拒绝');
+          })
+          .catch(err => {
+            console.error('请求麦克风权限时出错:', err);
+          });
+      } else {
+        console.log('此版本的Electron不支持askForMediaAccess API');
+      }
+    } catch (error) {
+      console.error('请求麦克风权限时发生错误:', error);
+    }
+  }
+
   // 确保应用目录存在
   const rendererDir = path.join(isDev ? __dirname : process.resourcesPath, 'renderer');
   if (!fs.existsSync(rendererDir)) {

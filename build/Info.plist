@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>CFBundleDisplayName</key>
+    <string>Tracerouter</string>
+    <key>CFBundleExecutable</key>
+    <string>Tracerouter</string>
+    <key>CFBundleIconFile</key>
+    <string>icon.icns</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.tracerouter.app</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>此应用需要使用麦克风进行语音识别和控制功能</string>
+    <key>NSCameraUsageDescription</key>
+    <string>此应用不需要使用相机</string>
+  </dict>
+</plist> 
