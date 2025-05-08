@@ -10,6 +10,7 @@ from typing import Dict, Any
 然后将结果存储为简单的CSV格式：ip,latitude,longitude
 '''
 
+
 def ip_to_geolocation_data(ip: str) -> Dict[str, Any]:
     """查询IP的地理位置信息（经纬度）"""
     url = f"http://ip-api.com/json/{ip}"
@@ -63,15 +64,40 @@ def process_traceroute_json(json_file_path: str, csv_writer) -> None:
         # 只写入IP和经纬度
         csv_writer.writerow([ip, lat, lon])
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="从traceroute JSON提取IP并查询地理位置")
-    parser.add_argument("domain_name", help="用于识别traceroute JSON文件的域名")
-    args = parser.parse_args()
+def read_first_line(file_path):
+    try:
+        # 使用 with 语句打开文件，确保文件在操作完成后正确关闭
+        with open(file_path, 'r', encoding='utf-8') as file:
+            first_line = file.readline().strip()
+            return first_line
+    except FileNotFoundError:
+        print(f"文件 {file_path} 未找到。")
+        return None
+    except Exception as e:
+        print(f"读取文件时发生错误: {e}")
+        return None
 
-    # 处理域名：将点替换为下划线，以符合文件命名格式
-    formatted_domain = args.domain_name.replace('.', '_')
-    
-    # JSON文件路径 
+if __name__ == '__main__':
+
+
+    # 如果输入文件
+    input_file = read_first_line("filename.txt")
+
+    if input_file is not None:      # 如果输入的是一个文件路径
+        domain_name = read_first_line(input_file)
+        formatted_domain = domain_name.replace('.', '_')
+
+
+    else:                           # 如果输入的是单个网址
+        parser = argparse.ArgumentParser(description="从traceroute JSON提取IP并查询地理位置")
+        parser.add_argument("domain_name", help="用于识别traceroute JSON文件的域名")
+        args = parser.parse_args()
+        # 处理域名：将点替换为下划线，以符合文件命名格式
+        formatted_domain = args.domain_name.replace('.', '_')
+
+
+
+    # JSON文件路径
     json_file_name = f"traceroute_{formatted_domain}.json"
     json_file_path = os.path.join("Traceroute_Demo", "traceroute_results", json_file_name)
     
