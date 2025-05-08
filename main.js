@@ -85,7 +85,11 @@ function spawnPythonProcess(scriptPath, args, event, prefix) {
 
   return pythonProcess;
 }
-
+ipcMain.handle('save-option-json', async (event, content) => {
+  const filePath = path.join(process.cwd(), 'option.json');
+  fs.writeFileSync(filePath, content, 'utf-8');
+  return true;
+});
 function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
