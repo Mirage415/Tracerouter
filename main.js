@@ -280,46 +280,53 @@ ipcMain.handle('process-whisper-audio', async (event, audioData, tempFileName) =
       // 尝试不同的调用方法
       let result;
       if (typeof nodewhisper === 'function') {
-        // 直接作为函数调用
         console.log('尝试直接调用nodewhisper函数');
-        // 使用基本选项简化调用
-        result = await nodewhisper(processFilePath, {
+        const whisperOptions = {
           modelName: 'tiny.en',
           autoDownloadModelName: 'tiny.en',
           modelDir: modelPath,
-          removeWavFileAfterTranscription: false,
-          whisperOptions: {
+          removeWavFileAfterTranscription: false, // 保留临时文件以便调试
+          whisperOptions: { // 这些是直接传递给 whisper.cpp 的参数
             language: 'auto',
             outputInText: true,
-            temperature: 0,
+            temperature: 0
+            // no_timestamps: true, // 尝试添加这个，看 whisper.cpp 是否能识别
           }
-        });
+        };
+        console.log('传递给 nodewhisper 的完整选项:', JSON.stringify(whisperOptions, null, 2));
+        result = await nodewhisper(processFilePath, whisperOptions);
       } else if (nodewhisper.nodewhisper && typeof nodewhisper.nodewhisper === 'function') {
-        // 使用导出的nodewhisper函数
         console.log('尝试调用nodewhisper.nodewhisper函数');
-        result = await nodewhisper.nodewhisper(processFilePath, {
+        const whisperOptions = {
           modelName: 'tiny.en',
           autoDownloadModelName: 'tiny.en',
           modelDir: modelPath,
-          whisperOptions: {
+          removeWavFileAfterTranscription: false, // 保留临时文件以便调试
+          whisperOptions: { // 这些是直接传递给 whisper.cpp 的参数
             language: 'auto',
             outputInText: true,
-            temperature: 0,
+            temperature: 0
+            // no_timestamps: true, // 尝试添加这个，看 whisper.cpp 是否能识别
           }
-        });
+        };
+        console.log('传递给 nodewhisper 的完整选项:', JSON.stringify(whisperOptions, null, 2));
+        result = await nodewhisper.nodewhisper(processFilePath, whisperOptions);
       } else if (nodewhisper.default && typeof nodewhisper.default === 'function') {
-        // 使用默认导出
         console.log('尝试调用nodewhisper.default函数');
-        result = await nodewhisper.default(processFilePath, {
+        const whisperOptions = {
           modelName: 'tiny.en',
           autoDownloadModelName: 'tiny.en',
           modelDir: modelPath,
-          whisperOptions: {
+          removeWavFileAfterTranscription: false, // 保留临时文件以便调试
+          whisperOptions: { // 这些是直接传递给 whisper.cpp 的参数
             language: 'auto',
             outputInText: true,
-            temperature: 0,
+            temperature: 0
+            // no_timestamps: true, // 尝试添加这个，看 whisper.cpp 是否能识别
           }
-        });
+        };
+        console.log('传递给 nodewhisper 的完整选项:', JSON.stringify(whisperOptions, null, 2));
+        result = await nodewhisper.default(processFilePath, whisperOptions);
       } else {
         // 没有可用的函数
         throw new Error('无法找到可用的whisper函数调用方法，请检查nodejs-whisper模块');
