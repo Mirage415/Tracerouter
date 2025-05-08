@@ -154,6 +154,97 @@
     </div>
     <p style="font-size:0.8em;color:#ccc;">Say a domain name, for example: "google.com" or "baidu"</p>
 
+    <!-- <button id="exportOptionsBtn">Output json</button> -->
+     <!-- 在合适位置加按钮 -->
+<button id="exportOptionsBtn">Export</button>
+
+<!-- 弹窗表单（初始隐藏） -->
+<div id="optionsModal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:100;background:rgba(0,0,0,0.4);">
+  <div style="background:#222;padding:20px;border-radius:8px;position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);min-width:350px;">
+    <h3 style="margin-top:0;">Edit</h3>
+    <form id="optionsForm">
+      <div style="display:flex;align-items:center;margin-bottom:8px;">
+        <label style="width:120px;">package_size</label>
+        <input name="package_size" type="number" value="64" />
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:8px;">
+        <label style="width:120px;">series_count</label>
+        <input name="series_count" type="number" value="1" />
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:8px;">
+        <label style="width:120px;">probe_sequence</label>
+        <input name="probe_sequence" type="text" value="udp,tcp,icmp" placeholder="用逗号分隔" />
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:8px;">
+        <label style="width:120px;">queries</label>
+        <input name="queries" type="number" value="1" />
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:8px;">
+        <label style="width:120px;">series_interval</label>
+        <input name="series_interval" type="number" value="100" />
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:8px;">
+        <label style="width:120px;">z</label>
+        <input name="z" type="number" value="0" />
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:8px;">
+        <label style="width:120px;">max_hops</label>
+        <input name="max_hops" type="number" value="30" />
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:8px;">
+        <label style="width:120px;">wait</label>
+        <input name="wait" type="number" value="5000" />
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:8px;">
+        <label style="width:120px;">no_resolve</label>
+        <select name="no_resolve">
+          <option value="false">False</option>
+          <option value="true">True</option>
+        </select>
+      </div>
+      <div style="text-align:right;">
+        <button type="button" id="exportOptionsSubmit">Export</button>
+        <button type="button" id="exportOptionsCancel">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// 显示弹窗
+document.getElementById('exportOptionsBtn').onclick = () => {
+  document.getElementById('optionsModal').style.display = 'block';
+};
+// 取消按钮
+document.getElementById('exportOptionsCancel').onclick = () => {
+  document.getElementById('optionsModal').style.display = 'none';
+};
+// 导出按钮
+document.getElementById('exportOptionsSubmit').onclick = () => {
+  const form = document.getElementById('optionsForm');
+  const data = new FormData(form);
+  const options = {
+    package_size: Number(data.get('package_size')),
+    series_count: Number(data.get('series_count')),
+    probe_sequence: data.get('probe_sequence').split(',').map(s=>s.trim()),
+    queries: Number(data.get('queries')),
+    series_interval: Number(data.get('series_interval')),
+    z: Number(data.get('z')),
+    max_hops: Number(data.get('max_hops')),
+    wait: Number(data.get('wait')),
+    no_resolve: data.get('no_resolve') === 'true'
+  };
+  // 下载为JSON文件
+  const blob = new Blob([JSON.stringify(options, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'options.json';
+  a.click();
+  document.getElementById('optionsModal').style.display = 'none';
+};
+</script>
+
+
     <!-- <button id="batchBtn">batch input</button>
     <div id="batchModal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:100;background:rgba(0,0,0,0.4);">
       <div style="background:#222;padding:20px;border-radius:8px;position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);min-width:300px;">
@@ -185,7 +276,15 @@
       style="color: #ff0; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px; margin-top: 5px;">Waiting for
       voice input...
     </div>
+
+
+
   </div>
+
+
+
+
+
 
   <script>
     // Auto-execute traceroute when input changes and loses focus or Enter key is pressed

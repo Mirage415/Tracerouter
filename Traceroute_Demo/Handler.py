@@ -264,13 +264,17 @@ def read_first_line(file_path):
 def main():
     # 示例选项 (对应traceroute命令行参数)
     options = {
-        "probe_sequence":["udp", "tcp", "icmp"],
-        "queries": 1,  # 每跳发送3个探测包
+        "package_size" : 64, # 探针的payload字节数(用)
+        "series_count": 1 , # 每个hop发送多少个series
+        "probe_sequence":["udp", "tcp", "icmp"], # series的协议组成及顺序
+        "queries": 1,  # 一个series中每个协议发送多少个probes
+        "series_interval": 100,  # 每个series之间的时间间隔(ms)
+        "z" : 0,   # 每个probes之间的时间间隔（ms）
         "max_hops": 30,  # 最大跳数
-        "wait": 5000,  # 等待时间(ms)
-        "no_resolve": False,  # 解析主机名
-        "extensions": False  # 记录扩展信息
+        "wait": 5000,  # time-out 时间(ms)
+        "no_resolve": False,  # 是否解析主机名
     }
+
     try:
         # 处理输入文件
 
