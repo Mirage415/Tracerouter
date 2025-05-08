@@ -3,6 +3,8 @@ import os
 import json
 import csv
 import sys
+import argparse
+from pathlib import Path
 from typing import List, Dict, Union
 
 # 尝试多种导入策略
@@ -26,12 +28,14 @@ except (ImportError, ModuleNotFoundError):
 
 
 class TracerouteHandler:
-    def __init__(self, output_dir: str = "results"):
+    def __init__(self, output_dir: str=""):
         """
         初始化处理器
         :param output_dir: 结果输出目录
         """
-        self.output_dir = output_dir
+        self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        self.output_dir = os.path.join(self.project_root, "Traceroute_Demo", "traceroute_results")
+        # self.output_dir = output_dir if output_dir else self.output_dir
         os.makedirs(self.output_dir, exist_ok=True)
 
     def read_targets(self, input_file: str) -> List[str]:
@@ -216,14 +220,48 @@ class TracerouteHandler:
 
         return all_results
 
-def Handler_run(options:dict, input_file:str, output_format="json", output_dir="traceroute_results"):
+def Handler_run_file(options:dict, input_file:str, output_format="json", output_dir="traceroute_results"):
     handler = TracerouteHandler(output_dir=output_dir)
     all_results = handler.batch_trace(input_file, options, output_format=output_format)
     print("\nBatch tracing completed. Results saved to:", handler.output_dir)
 
+def Handler_run_url(options:dict):
+    parser = argparse.ArgumentParser(description="执行traceroute并生成JSON文件")
+    parser.add_argument("domain", help="要traceroute的域名或IP地址")
+    args = parser.parse_args()
+    target_domain = args.domain
+    print(f"接收到目标域名: {target_domain}")
 
-# 使用示例
-if __name__ == "__main__":
+    handler = TracerouteHandler()
+    pass
+    try:
+        print(f"开始traceroute到: {target_domain}")
+        results = handler.process_target(target_domain, options)
+        handler.save_results(target_domain, results, "json")
+        print(f"Traceroute完成，结果已保存到: {handler.output_dir}")
+
+        return 0  # 成功退出码
+    except Exception as e:
+        print(f"执行traceroute时出错: {e}")
+        return 1  # 错误退出码
+
+def read_first_line(file_path):
+    try:
+        # 使用 with 语句打开文件，确保文件在操作完成后正确关闭
+        with open(file_path, 'r', encoding='utf-8') as file:
+            first_line = file.readline().strip()
+            return first_line
+    except FileNotFoundError:
+        print(f"文件 {file_path} 未找到。")
+        return None
+    except Exception as e:
+        print(f"读取文件时发生错误: {e}")
+        return None
+
+
+
+
+def main():
     # 示例选项 (对应traceroute命令行参数)
     options = {
         "probe_sequence":["udp", "tcp", "icmp"],
@@ -233,11 +271,21 @@ if __name__ == "__main__":
         "no_resolve": False,  # 解析主机名
         "extensions": False  # 记录扩展信息
     }
-    # 处理输入文件
-    input_file = "/Users/mac/Documents/GitHub/Tracerouter/Traceroute_Demo/test_target_normal.txt"  # 或 targets.csv
-    Handler_run(options, input_file,output_dir="traceroute_results")
+    try:
+        # 处理输入文件
 
 
+        # 如果输入文件
+        input_file = read_first_line("filename.txt")
+        if input_file is not None:      # 如果输入的是一个文件路径
+            Handler_run_file(options, input_file)
+        else:                           # 如果输入的是单个网址
+            Handler_run_url(options)   # 直接通过parsearg获取
+        # series["tcp", "udp", "icmp", "tcp"]
+        return 0  # 成功退出码
+    except Exception as e:
+        print(f"执行traceroute时出错: {e}")
+        return 1  # 错误退出码
 
-
-    # series["tcp", "udp", "icmp", "tcp"]
+if __name__ == "__main__":
+    sys.exit(main())
