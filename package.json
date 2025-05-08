@@ -37,9 +37,11 @@
   },
   "dependencies": {
     "ffmpeg-static": "^5.2.0",
+    "node-fetch": "^3.3.2",
     "nodejs-whisper": "^0.2.6",
     "openai": "^4.95.1",
-    "whisper-node": "^1.1.1"
+    "whisper-node": "^1.1.1",
+    "whisper-node-addon": "latest"
   },
   "build": {
     "appId": "com.tracerouter.app",
@@ -79,6 +81,13 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "whisper-models",
+        "to": "whisper-models",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
@@ -100,7 +109,7 @@
       "createStartMenuShortcut": true
     },
     "mac": {
-      "target": "dmg",
+      "target": ["zip"],
       "icon": "build/icon.icns",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
