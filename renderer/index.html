@@ -236,11 +236,23 @@
           wait: Number(data.get('wait')),
           no_resolve: data.get('no_resolve') === 'true'
         };
-        // 下载为JSON文件
+        // 直接保存到renderer目录下，无需弹窗
+        if (window.api && window.api.saveFileToRendererDir) {
+          // Electron 环境，调用主进程API保存文件
+          window.api.saveFileToRendererDir('option.json', JSON.stringify(options, null, 2))
+            .then(() => {
+              debugLog('option.json 已保存到 renderer 目录');
+            })
+            .catch(err => {
+              debugLog('保存 option.json 失败: ' + err.message);
+            });
+        } else {
+          debugLog('Electron API 不可用，无法直接保存到 renderer 目录');
+        }
         const blob = new Blob([JSON.stringify(options, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'options.json';
+        a.download = 'option.json'; // 文件名固定为 option.json
         a.click();
         document.getElementById('optionsModal').style.display = 'none';
       };
