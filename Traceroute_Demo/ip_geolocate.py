@@ -47,16 +47,17 @@ def process_traceroute_json(json_file_path: str, csv_writer) -> None:
     for key in traceroute_data:
         if key.isdigit():  # 只处理跳数键
             hop_data = traceroute_data[key]
-            for protocol in ["udp", "tcp", "icmp"]:
-                if protocol in hop_data and "probes" in hop_data[protocol]:
-                    for probe in hop_data[protocol]["probes"]:
-                        ip_address = probe.get("from")
-                        if ip_address:
-                            if not all_ips:
-                                all_ips.append(ip_address)
-                            else:
-                                if ip_address != all_ips[-1]:
-                                    all_ips.append(ip_address)
+            # for protocol in ["udp", "tcp", "icmp"]:
+            protocol = "udp" if "udp" in hop_data else "tcp" if "tcp" in hop_data else "icmp"
+            if "probes" in hop_data[protocol]:
+                probe = hop_data[protocol]["probes"][0]
+                ip_address = probe.get("from")
+                if ip_address:
+                    if not all_ips:
+                        all_ips.append(ip_address)
+                    else:
+                        if ip_address != all_ips[-1]:
+                            all_ips.append(ip_address)
 
     
     # 为每个唯一的IP地址获取地理位置并写入CSV

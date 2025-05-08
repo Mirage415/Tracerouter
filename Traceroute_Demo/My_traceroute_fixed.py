@@ -842,16 +842,19 @@ class Traceroute:
             # Display statistics per protocol
             for proto in self.probe_sequence:
                 stats = hop[proto]['stats']
-                if stats['count'] > 0:
-                    print(f"  {proto.upper()} Stats: "
-                          f"Sent={stats['count']}, "
-                          f"Responses={stats['responses']}, "
-                          f"Loss={stats['loss']:.0%}")
+                if not stats:
+                    continue
+                if stats:
+                    if stats['count'] > 0:
+                        print(f"  {proto.upper()} Stats: "
+                            f"Sent={stats['count']}, "
+                            f"Responses={stats['responses']}, "
+                            f"Loss={stats['loss']:.0%}")
 
-                    if stats['responses'] > 0:
-                        print(f"    RTT: Min={stats['min']:.2f}ms, "
-                              f"Avg={stats['avg']:.2f}ms, "
-                              f"Max={stats['max']:.2f}ms")
+                        if stats['responses'] > 0:
+                            print(f"    RTT: Min={stats['min']:.2f}ms, "
+                                f"Avg={stats['avg']:.2f}ms, "
+                                f"Max={stats['max']:.2f}ms")
 
             # Display extensions if present
             if self.flag_show_extensions and hop.get('extensions'):

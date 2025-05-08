@@ -265,7 +265,7 @@ def main():
     # 示例选项 (对应traceroute命令行参数)
     options = {
         "probe_sequence":["udp", "tcp", "icmp"],
-        "queries": 3,  # 每跳发送3个探测包
+        "queries": 1,  # 每跳发送3个探测包
         "max_hops": 30,  # 最大跳数
         "wait": 5000,  # 等待时间(ms)
         "no_resolve": False,  # 解析主机名
