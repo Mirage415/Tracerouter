@@ -127,7 +127,7 @@
     #rawInput {
       margin-top: 10px;
       width: 90%;
-      padding: 8px; 
+      padding: 8px;
       background: rgba(255, 255, 255, 0.2);
       border: none;
       border-radius: 5px;
@@ -658,26 +658,26 @@ document.getElementById('exportOptionsSubmit').onclick = () => {
 
 
     /////
-//     document.getElementById('batchBtn').onclick = () => {
-//   document.getElementById('batchModal').style.display = 'block';
-//   document.getElementById('batchFileInput').value = '';
-// };
-// document.getElementById('batchCancelBtn').onclick = () => {
-//   document.getElementById('batchModal').style.display = 'none';
-// };
-// document.getElementById('batchSubmitBtn').onclick = () => {
-//   const filePath = document.getElementById('batchFileInput').value.trim();
-//   if (filePath) {
-//     debugLog(`批量导入文件路径: ${filePath}`);
-//     document.getElementById('batchModal').style.display = 'none';
-//     // 发送到主进程
-//     if (hasElectronAPI) {
-//       window.api.runTraceroute(`batchfile ${filePath}`);
-//     } else {
-//       debugLog("Electron API 不可用，无法批量导入");
-//     }
-//   }
-// };
+    //     document.getElementById('batchBtn').onclick = () => {
+    //   document.getElementById('batchModal').style.display = 'block';
+    //   document.getElementById('batchFileInput').value = '';
+    // };
+    // document.getElementById('batchCancelBtn').onclick = () => {
+    //   document.getElementById('batchModal').style.display = 'none';
+    // };
+    // document.getElementById('batchSubmitBtn').onclick = () => {
+    //   const filePath = document.getElementById('batchFileInput').value.trim();
+    //   if (filePath) {
+    //     debugLog(`批量导入文件路径: ${filePath}`);
+    //     document.getElementById('batchModal').style.display = 'none';
+    //     // 发送到主进程
+    //     if (hasElectronAPI) {
+    //       window.api.runTraceroute(`batchfile ${filePath}`);
+    //     } else {
+    //       debugLog("Electron API 不可用，无法批量导入");
+    //     }
+    //   }
+    // };
 
 
     document.getElementById('stopBtn').onclick = () => {
