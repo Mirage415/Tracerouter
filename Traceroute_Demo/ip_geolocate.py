@@ -64,8 +64,10 @@ def process_traceroute_json(json_file_path: str, csv_writer) -> None:
     for ip in all_ips:
         print(f"查询IP: {ip}")
         geo_data = ip_to_geolocation_data(ip)
-        lat = geo_data.get("lat", 0.0)
-        lon = geo_data.get("lon", 0.0)
+        lat = geo_data.get("lat", 31.15073)
+        lat = 31.15073 if lat == 0 else lat
+        lon = geo_data.get("lon", 121.47711)
+        lon = 121.47711 if lon == 0 else lon
         
         # 只写入IP和经纬度
         csv_writer.writerow([ip, lat, lon])

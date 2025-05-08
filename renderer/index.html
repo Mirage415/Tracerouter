@@ -128,7 +128,7 @@
     #rawInput {
       margin-top: 10px;
       width: 90%;
-      padding: 8px;
+      padding: 8px; 
       background: rgba(255, 255, 255, 0.2);
       border: none;
       border-radius: 5px;
@@ -155,12 +155,23 @@
     </div>
     <p style="font-size:0.8em;color:#ccc;">Say a domain name, for example: "google.com" or "baidu"</p>
 
+    <!-- <button id="batchBtn">batch input</button>
+    <div id="batchModal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:100;background:rgba(0,0,0,0.4);">
+      <div style="background:#222;padding:20px;border-radius:8px;position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);min-width:300px;">
+        <h3 style="margin-top:0;">Please input file directory</h3>
+        <input id="batchFileInput" type="text" style="width:90%;" placeholder="E.g. /Users/xxx/targets.txt">
+        <div style="margin-top:10px;text-align:right;">
+          <button id="batchSubmitBtn">Submit</button>
+          <button id="batchCancelBtn">Cancel</button>
+        </div>
+      </div>
+    </div> -->
     <!-- Add manual input field -->
     <input type="text" id="rawInput" placeholder="Or directly enter domain name...">
     <button id="submitBtn">Submit</button>
   </div>
 
-  <div id="output-panel" style="top: 300px;">
+  <div id="output-panel" style="top: 400px;">
     <h3>Execution Result:</h3>
     <div id="traceOutput"></div>
   </div>
@@ -414,6 +425,30 @@
         document.getElementById('stopBtn').disabled = true;
       }
     };
+
+
+    /////
+//     document.getElementById('batchBtn').onclick = () => {
+//   document.getElementById('batchModal').style.display = 'block';
+//   document.getElementById('batchFileInput').value = '';
+// };
+// document.getElementById('batchCancelBtn').onclick = () => {
+//   document.getElementById('batchModal').style.display = 'none';
+// };
+// document.getElementById('batchSubmitBtn').onclick = () => {
+//   const filePath = document.getElementById('batchFileInput').value.trim();
+//   if (filePath) {
+//     debugLog(`批量导入文件路径: ${filePath}`);
+//     document.getElementById('batchModal').style.display = 'none';
+//     // 发送到主进程
+//     if (hasElectronAPI) {
+//       window.api.runTraceroute(`batchfile ${filePath}`);
+//     } else {
+//       debugLog("Electron API 不可用，无法批量导入");
+//     }
+//   }
+// };
+
 
     document.getElementById('stopBtn').onclick = () => {
       debugLog("Stopping speech recognition");

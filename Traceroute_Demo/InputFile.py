@@ -1,6 +1,7 @@
 import argparse
 import os
 import re
+import sys
 
 
 
@@ -42,8 +43,9 @@ class FileName:
         if not url_pattern.match(self.filename):
             # 如果是文件路径，则创建 filename.txt 文件并写入文件路径
             if not os.path.isfile(self.filename):
-                print(f"警告: 文件 {self.filename} 不存在，使用默认文件路径 {self.default_filename}")
-                self.filename  = self.default_filename
+                print(f"警告: 文件 {self.filename} 不存在")
+                
+                sys.exit(1)
             with open('filename.txt', 'w') as f:
                 f.write(self.filename)
             print(f"已创建 filename.txt 文件，内容为：{self.filename}")
