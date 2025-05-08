@@ -41,7 +41,7 @@ def process_traceroute_json(json_file_path: str, csv_writer) -> None:
         traceroute_data = json.load(f)
 
     # 收集所有跳数的IP（使用集合去重）
-    all_ips = set()
+    all_ips = list()
     
     # 提取所有跳数中的IP地址
     for key in traceroute_data:
@@ -52,7 +52,12 @@ def process_traceroute_json(json_file_path: str, csv_writer) -> None:
                     for probe in hop_data[protocol]["probes"]:
                         ip_address = probe.get("from")
                         if ip_address:
-                            all_ips.add(ip_address)
+                            if not all_ips:
+                                all_ips.append(ip_address)
+                            else:
+                                if ip_address != all_ips[-1]:
+                                    all_ips.append(ip_address)
+
     
     # 为每个唯一的IP地址获取地理位置并写入CSV
     for ip in all_ips:
