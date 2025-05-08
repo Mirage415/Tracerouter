@@ -58,8 +58,8 @@ var/
 *.egg
 
 # Traceroute的特定输出目录
-traceroute_results/
-renderer/output.csv
+# traceroute_results/
+# renderer/output.csv
 
 # 操作系统文件
 .DS_Store

@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/Mirage415/Tracerouter#readme",
   "devDependencies": {
-    "electron": "^35.2.0",
+    "electron": "^36.1.0",
     "electron-builder": "^24.9.1"
   },
   "dependencies": {
