@@ -5,42 +5,30 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const ffmpeg = require('ffmpeg-static');
 
-// 尝试各种方式导入nodejs-whisper
-let nodewhisper;
-try {
-  // 先尝试常规require
-  const whisperModule = require('nodejs-whisper');
-  console.log('Successfully imported nodejs-whisper, type:', typeof whisperModule);
-
-  // 检查模块结构
-  if (typeof whisperModule === 'function') {
-    // 如果直接是函数，使用它
-    nodewhisper = whisperModule;
-    console.log('nodejs-whisper is a function, using directly');
-  } else if (typeof whisperModule === 'object') {
-    // 如果是对象，打印其所有键
-    console.log('nodejs-whisper is an object with keys:', Object.keys(whisperModule));
-
-    // 尝试找到可能的函数
-    if (whisperModule.default && typeof whisperModule.default === 'function') {
-      nodewhisper = whisperModule.default;
-      console.log('Using whisperModule.default function');
-    } else if (whisperModule.nodewhisper && typeof whisperModule.nodewhisper === 'function') {
-      nodewhisper = whisperModule.nodewhisper;
-      console.log('Using whisperModule.nodewhisper function');
-    } else {
-      // 如果没有合适的函数，直接存储整个模块
-      nodewhisper = whisperModule;
-      console.log('No suitable function found, storing the whole module');
-    }
-  } else {
-    console.error('nodejs-whisper module is not a function or object:', typeof whisperModule);
-    nodewhisper = null;
+// 使用whisper-node-addon替代nodejs-whisper
+// 修正导入方式与调用
+const whisperModule = require('whisper-node-addon');
+// 创建更健壮的转录函数包装
+const whisper = {
+  transcribe: async (options) => {
+    return new Promise((resolve, reject) => {
+      try {
+        console.log('调用whisperModule.transcribe');
+        // 此处检查返回类型，兼容同步/异步API
+        const result = whisperModule.transcribe(options);
+        if (result instanceof Promise) {
+          result.then(resolve).catch(reject);
+        } else {
+          // 同步函数也处理
+          resolve(result);
+        }
+      } catch (error) {
+        console.error('Whisper转录错误:', error);
+        reject(error);
+      }
+    });
   }
-} catch (error) {
-  console.error('Error importing nodejs-whisper:', error);
-  nodewhisper = null;
-}
+};
 
 // 处理路径，确保在打包和开发环境中都能正常工作
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -130,6 +118,13 @@ app.whenReady().then(() => {
   );
   if (!fs.existsSync(resultsDir)) {
     fs.mkdirSync(resultsDir, { recursive: true });
+  }
+
+  // 确保whisper-models目录存在
+  const whisperModelsDir = path.join(isDev ? __dirname : process.resourcesPath, 'whisper-models');
+  if (!fs.existsSync(whisperModelsDir)) {
+    fs.mkdirSync(whisperModelsDir, { recursive: true });
+    console.log(`创建Whisper模型目录: ${whisperModelsDir}`);
   }
 });
 
@@ -227,151 +222,148 @@ ipcMain.on('run-traceroute', (event, fullCommand) => {
   });
 });
 
-// 处理Whisper音频数据
+// 处理Whisper音频数据 - 使用whisper-node-addon重写
 ipcMain.handle('process-whisper-audio', async (event, audioData, tempFileName) => {
   try {
     console.log(`开始处理音频数据，临时文件名: ${tempFileName}`);
 
-    // 检查nodejs-whisper是否可用
-    if (!nodewhisper) {
-      throw new Error('nodejs-whisper模块未能正确加载，请重新安装该依赖');
-    }
-
-    // 打印nodewhisper对象结构以便调试
-    console.log('nodewhisper类型:', typeof nodewhisper);
-
     // 创建临时文件路径
     const audioFilePath = path.join(tempDir, tempFileName);
-    console.log(`音频文件路径: ${audioFilePath}`);
+    console.log(`原始音频文件路径: ${audioFilePath}`);
 
-    // 将ArrayBuffer写入文件 - 使用wav格式，确保格式正确
+    // 将ArrayBuffer写入文件
     fs.writeFileSync(audioFilePath, Buffer.from(audioData));
     console.log(`音频数据已写入文件，大小: ${audioData.length} 字节`);
 
-    // 检查ffmpeg是否存在并使用它进行转换
+    // 为转换后的文件创建路径 - 使用.wav扩展名
+    const wavFilePath = path.join(tempDir, `converted_${Date.now()}.wav`);
+    console.log(`转换后音频文件路径: ${wavFilePath}`);
+
     try {
+      // 使用ffmpeg转换音频格式 - 确保是16kHz, 16bit, 单声道PCM格式
       const { execSync } = require('child_process');
-      console.log('Using ffmpeg from ffmpeg-static at:', ffmpeg);
 
-      // 尝试使用ffmpeg直接转换音频格式，确保格式兼容
-      const wavFilePath = path.join(tempDir, `converted_${tempFileName}`);
-      // 在命令中明确使用 ffmpeg-static 提供的路径，并确保路径中的空格被正确处理
-      const ffmpegCommand = `"${ffmpeg}" -y -i "${audioFilePath}" -acodec pcm_s16le -ar 16000 -ac 1 "${wavFilePath}"`;
-      console.log('Executing ffmpeg command:', ffmpegCommand);
-      execSync(ffmpegCommand);
-      console.log(`音频已转换为16kHz, 16bit, 单声道WAV格式: ${wavFilePath}`);
+      console.log('使用ffmpeg转换音频:');
+      console.log(`ffmpeg路径: ${ffmpeg}`);
 
-      // 使用转换后的文件
-      const processFilePath = wavFilePath;
+      // 构建并执行ffmpeg命令，指定所有关键参数
+      const ffmpegCommand = `"${ffmpeg}" -y -loglevel info -i "${audioFilePath}" -acodec pcm_s16le -ar 16000 -ac 1 -f wav "${wavFilePath}"`;
+      console.log(`执行命令: ${ffmpegCommand}`);
 
-      // 检查模型目录
-      const userDataPath = app.getPath('userData');
-      const modelPath = path.join(userDataPath, 'whisper-models');
+      const ffmpegOutput = execSync(ffmpegCommand, { encoding: 'utf8' });
+      console.log('ffmpeg输出:', ffmpegOutput);
+
+      // 验证转换后的文件
+      if (!fs.existsSync(wavFilePath)) {
+        throw new Error(`转换后的文件不存在: ${wavFilePath}`);
+      }
+
+      const outputStats = fs.statSync(wavFilePath);
+      console.log(`转换成功: ${wavFilePath}, 大小: ${outputStats.size} 字节`);
+
+      // 准备模型路径 - 使用项目中的模型文件
+      const modelName = 'ggml-tiny.en.bin'; // 使用标准tiny模型名称
+      const modelPath = path.join(getResourcePath('whisper-models'), modelName);
+      console.log(`模型文件路径: ${modelPath}`);
+
+      // 验证模型文件
       if (!fs.existsSync(modelPath)) {
-        fs.mkdirSync(modelPath, { recursive: true });
-        console.log(`创建Whisper模型目录: ${modelPath}`);
+        throw new Error(`模型文件不存在: ${modelPath}`);
       }
 
-      // 添加更多调试信息
-      console.log('尝试使用nodejs-whisper处理音频文件');
-      console.log('音频文件是否存在:', fs.existsSync(processFilePath));
-      console.log('音频文件大小:', fs.statSync(processFilePath).size);
+      const modelStats = fs.statSync(modelPath);
+      console.log(`模型文件验证成功, 大小: ${modelStats.size} 字节`);
 
-      // 尝试不同的调用方法
-      let result;
-      if (typeof nodewhisper === 'function') {
-        console.log('尝试直接调用nodewhisper函数');
-        const whisperOptions = {
-          modelName: 'tiny.en',
-          autoDownloadModelName: 'tiny.en',
-          modelDir: modelPath,
-          removeWavFileAfterTranscription: false, // 保留临时文件以便调试
-          whisperOptions: { // 这些是直接传递给 whisper.cpp 的参数
-            language: 'auto',
-            outputInText: true,
-            temperature: 0
-            // no_timestamps: true, // 尝试添加这个，看 whisper.cpp 是否能识别
-          }
-        };
-        console.log('传递给 nodewhisper 的完整选项:', JSON.stringify(whisperOptions, null, 2));
-        result = await nodewhisper(processFilePath, whisperOptions);
-      } else if (nodewhisper.nodewhisper && typeof nodewhisper.nodewhisper === 'function') {
-        console.log('尝试调用nodewhisper.nodewhisper函数');
-        const whisperOptions = {
-          modelName: 'tiny.en',
-          autoDownloadModelName: 'tiny.en',
-          modelDir: modelPath,
-          removeWavFileAfterTranscription: false, // 保留临时文件以便调试
-          whisperOptions: { // 这些是直接传递给 whisper.cpp 的参数
-            language: 'auto',
-            outputInText: true,
-            temperature: 0
-            // no_timestamps: true, // 尝试添加这个，看 whisper.cpp 是否能识别
-          }
-        };
-        console.log('传递给 nodewhisper 的完整选项:', JSON.stringify(whisperOptions, null, 2));
-        result = await nodewhisper.nodewhisper(processFilePath, whisperOptions);
-      } else if (nodewhisper.default && typeof nodewhisper.default === 'function') {
-        console.log('尝试调用nodewhisper.default函数');
-        const whisperOptions = {
-          modelName: 'tiny.en',
-          autoDownloadModelName: 'tiny.en',
-          modelDir: modelPath,
-          removeWavFileAfterTranscription: false, // 保留临时文件以便调试
-          whisperOptions: { // 这些是直接传递给 whisper.cpp 的参数
-            language: 'auto',
-            outputInText: true,
-            temperature: 0
-            // no_timestamps: true, // 尝试添加这个，看 whisper.cpp 是否能识别
-          }
-        };
-        console.log('传递给 nodewhisper 的完整选项:', JSON.stringify(whisperOptions, null, 2));
-        result = await nodewhisper.default(processFilePath, whisperOptions);
-      } else {
-        // 没有可用的函数
-        throw new Error('无法找到可用的whisper函数调用方法，请检查nodejs-whisper模块');
+      // 检查文件大小是否合理，tiny模型应该约为75MB
+      if (modelStats.size < 30000000) { // 小于30MB可能不完整
+        console.warn(`警告: 模型文件大小异常(${modelStats.size} 字节)，可能不完整`);
       }
 
-      console.log('Whisper处理完成, 结果:', result);
+      // 执行转录
+      console.log('开始执行Whisper转录...');
 
-      // 清理临时文件
+      const options = {
+        model: modelPath,          // 模型文件路径
+        fname_inp: wavFilePath,    // 输入音频文件路径
+        language: 'en',            // 指定英语
+        no_prints: false,          // 显示完整日志
+        use_gpu: false,            // 不使用GPU
+        translate: false,          // 不翻译
+        no_timestamps: true,       // 不包含时间戳
+        max_len: 0,                // 无长度限制
+        audio_ctx: 0               // 默认音频上下文
+      };
+
+      console.log('转录参数:', JSON.stringify(options, null, 2));
+
       try {
-        fs.unlinkSync(audioFilePath);
-        fs.unlinkSync(wavFilePath);
-        console.log('临时音频文件已删除');
-      } catch (cleanupError) {
-        console.error('删除临时文件失败:', cleanupError.message);
+        const result = await whisper.transcribe(options);
+        console.log('转录完成, 原始结果:', result);
+
+        // 清理临时文件
+        try {
+          fs.unlinkSync(audioFilePath);
+          console.log(`临时文件已删除: ${audioFilePath}`);
+
+          // 保留转换后的文件用于调试
+          // fs.unlinkSync(wavFilePath);
+          // console.log(`转换后的文件已删除: ${wavFilePath}`);
+        } catch (cleanupError) {
+          console.error('删除临时文件失败:', cleanupError);
+        }
+
+        // 处理各种可能的结果格式
+        let textOutput = '';
+        if (!result) {
+          console.log('结果为空');
+          return '未识别到内容';
+        }
+
+        // 处理不同类型的结果
+        if (typeof result === 'string') {
+          textOutput = result.trim();
+          console.log('结果是字符串:', textOutput);
+        } else if (typeof result === 'object') {
+          if (result.text) {
+            textOutput = result.text.trim();
+            console.log('结果是对象.text:', textOutput);
+          } else if (Array.isArray(result) && result.length > 0) {
+            const firstItem = result[0];
+            if (typeof firstItem === 'object' && firstItem.text) {
+              textOutput = firstItem.text.trim();
+              console.log('结果是数组对象:', textOutput);
+            } else if (typeof firstItem === 'string') {
+              textOutput = firstItem.trim();
+              console.log('结果是字符串数组:', textOutput);
+            } else if (Array.isArray(firstItem) && firstItem.length > 2) {
+              // 处理形如 [["时间戳开始", "时间戳结束", "文本内容"]] 的格式
+              textOutput = firstItem[2].trim();
+              console.log('结果是时间戳数组:', textOutput);
+            }
+          } else {
+            console.log('未知的对象结果格式:', JSON.stringify(result));
+            // 如果无法解析，返回整个结果的JSON字符串，让前端处理
+            return JSON.stringify(result);
+          }
+        } else {
+          console.log(`未知结果类型: ${typeof result}`);
+        }
+
+        console.log('最终识别文本:', textOutput || '(无文本)');
+        return textOutput || '未识别到内容';
+
+      } catch (transcribeError) {
+        console.error('转录过程错误:', transcribeError);
+        throw transcribeError;
       }
-
-      // 返回识别结果
-      let textOutput = typeof result === 'object' ? result.text || '' : result || '';
-
-      // 使用正则表达式移除时间戳，例如 [00:00:00.000 --> 00:00:01.160]
-      // 这个正则表达式会匹配方括号内的任意字符，直到遇到 " --> "，然后再匹配方括号内的任意字符
-      // \s* 用来匹配时间戳后面可能存在的空格
-      textOutput = textOutput.replace(/\[\d{2}:\d{2}:\d{2}\.\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}\.\d{3}\]\s*/g, '');
-
-      // 移除可能残留的单独的时间戳，例如 [00:00:00.000]
-      textOutput = textOutput.replace(/\[\d{2}:\d{2}:\d{2}\.\d{3}\]\s*/g, '');
-
-      // 进一步清理，移除纯数字和特定标点组合，防止残留的类似时间戳的片段
-      // 例如，移除像 "00:00:00.000" 这样的模式，如果它独立存在
-      textOutput = textOutput.replace(/\b\d{2}:\d{2}:\d{2}\.\d{3}\b\s*/g, '');
-
-      // 确保移除文本前后的多余空格
-      textOutput = textOutput.trim();
-
-      console.log('移除时间戳后的文本:', textOutput);
-      return textOutput || '未识别到内容'; // 确保即使清理后为空，也有默认值
     } catch (processingError) {
-      console.error('音频处理错误:', processingError.message);
-      throw processingError; // 继续向上抛出以便外层catch捕获
+      console.error('音频处理或转录错误:', processingError);
+      console.error('错误详情:', processingError.stack);
+      throw processingError;
     }
   } catch (error) {
-    console.error('Whisper处理失败:', error);
+    console.error('整体处理失败:', error);
     console.error('错误堆栈:', error.stack);
-
-    // 返回错误信息
     return `识别错误: ${error.message}`;
   }
 });
