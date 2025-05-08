@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
+const ffmpeg = require('ffmpeg-static');
 
 // 尝试各种方式导入nodejs-whisper
 let nodewhisper;
@@ -247,21 +248,17 @@ ipcMain.handle('process-whisper-audio', async (event, audioData, tempFileName) =
     fs.writeFileSync(audioFilePath, Buffer.from(audioData));
     console.log(`音频数据已写入文件，大小: ${audioData.length} 字节`);
 
-    // 检查ffmpeg是否存在，nodejs-whisper依赖它进行音频处理
+    // 检查ffmpeg是否存在并使用它进行转换
     try {
       const { execSync } = require('child_process');
-      let ffmpegVersion;
-      try {
-        ffmpegVersion = execSync('ffmpeg -version').toString().split('\n')[0];
-        console.log('检测到FFmpeg:', ffmpegVersion);
-      } catch (error) {
-        console.error('FFmpeg未找到，nodejs-whisper可能无法正常工作:', error.message);
-        throw new Error('缺少必要的FFmpeg组件，无法处理音频');
-      }
+      console.log('Using ffmpeg from ffmpeg-static at:', ffmpeg);
 
       // 尝试使用ffmpeg直接转换音频格式，确保格式兼容
       const wavFilePath = path.join(tempDir, `converted_${tempFileName}`);
-      execSync(`ffmpeg -y -i "${audioFilePath}" -acodec pcm_s16le -ar 16000 -ac 1 "${wavFilePath}"`);
+      // 在命令中明确使用 ffmpeg-static 提供的路径，并确保路径中的空格被正确处理
+      const ffmpegCommand = `"${ffmpeg}" -y -i "${audioFilePath}" -acodec pcm_s16le -ar 16000 -ac 1 "${wavFilePath}"`;
+      console.log('Executing ffmpeg command:', ffmpegCommand);
+      execSync(ffmpegCommand);
       console.log(`音频已转换为16kHz, 16bit, 单声道WAV格式: ${wavFilePath}`);
 
       // 使用转换后的文件
