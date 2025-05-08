@@ -61,26 +61,6 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
-  // 在Mac上请求麦克风权限
-  if (process.platform === 'darwin') {
-    // 仅在Mac上存在此API
-    try {
-      if (app.systemPreferences && app.systemPreferences.askForMediaAccess) {
-        app.systemPreferences.askForMediaAccess('microphone')
-          .then(granted => {
-            console.log('麦克风权限:', granted ? '已授予' : '已拒绝');
-          })
-          .catch(err => {
-            console.error('请求麦克风权限时出错:', err);
-          });
-      } else {
-        console.log('此版本的Electron不支持askForMediaAccess API');
-      }
-    } catch (error) {
-      console.error('请求麦克风权限时发生错误:', error);
-    }
-  }
-
   // 确保应用目录存在
   const rendererDir = path.join(isDev ? __dirname : process.resourcesPath, 'renderer');
   if (!fs.existsSync(rendererDir)) {
@@ -118,60 +98,76 @@ ipcMain.on('run-traceroute', (event, fullCommand) => {
   event.sender.send('traceroute-output', `开始执行目标为 ${targetDomain} 的路由追踪...\n`);
 
   // 设置Python脚本路径
+  const inputScriptPath = getResourcePath(path.join('Traceroute_Demo', 'InputFile.py'));
   const handlerScriptPath = getResourcePath(path.join('Traceroute_Demo', 'Handler.py'));
   const geolocateScriptPath = getResourcePath(path.join('Traceroute_Demo', 'ip_geolocate.py'));
 
-  // 创建handler进程
-  const handlerProcess = spawnPythonProcess(
-    handlerScriptPath,
+  const inputProcess = spawnPythonProcess(
+      inputScriptPath,
     [targetDomain],
     event,
-    '[Handler]'
+    '[input]'
   );
+  inputProcess.on('close', (handlerCode) => {
+    event.sender.send('traceroute-output', `\n[input] 脚本执行完成，退出码: ${handlerCode}\n`);
+  if (handlerCode === 0) {
+    event.sender.send('traceroute-output', `input目录文件已生成，正在进行tracert...\n`);
 
-  handlerProcess.on('close', (handlerCode) => {
-    event.sender.send('traceroute-output', `\n[Handler] 脚本执行完成，退出码: ${handlerCode}\n`);
 
-    if (handlerCode === 0) {
-      event.sender.send('traceroute-output', `Traceroute数据已生成，正在为 ${targetDomain} 获取地理位置...\n`);
-
-      // 创建地理位置处理进程
-      const geolocateProcess = spawnPythonProcess(
-        geolocateScriptPath,
+    // 创建handler进程
+    const handlerProcess = spawnPythonProcess(
+        handlerScriptPath,
         [targetDomain],
         event,
-        '[地理位置]'
-      );
+        '[Handler]'
+    );
+    handlerProcess.on('close', (handlerCode) => {
+      event.sender.send('traceroute-output', `\n[Handler] 脚本执行完成，退出码: ${handlerCode}\n`);
 
-      geolocateProcess.on('close', (geolocateCode) => {
-        event.sender.send('traceroute-output', `\n[地理位置] 脚本执行完成，退出码: ${geolocateCode}\n`);
+      if (handlerCode === 0) {
+        event.sender.send('traceroute-output', `Traceroute数据已生成，正在为 ${targetDomain} 获取地理位置...\n`);
 
-        if (geolocateCode === 0) {
-          event.sender.send('traceroute-output', '地理位置数据处理完成，正在打开Cesium地球可视化...\n');
+        // 创建地理位置处理进程
+        const geolocateProcess = spawnPythonProcess(
+            geolocateScriptPath,
+            [targetDomain],
+            event,
+            '[地理位置]'
+        );
 
-          // 创建Cesium窗口
-          const globeWindow = new BrowserWindow({
-            width: 1200,
-            height: 900,
-            title: `Cesium地球 - ${targetDomain}的路由追踪`,
-            webPreferences: {
-              nodeIntegration: true,
-              contextIsolation: false,
+        geolocateProcess.on('close', (geolocateCode) => {
+          event.sender.send('traceroute-output', `\n[地理位置] 脚本执行完成，退出码: ${geolocateCode}\n`);
+
+          if (geolocateCode === 0) {
+            event.sender.send('traceroute-output', '地理位置数据处理完成，正在打开Cesium地球可视化...\n');
+
+            // 创建Cesium窗口
+            const globeWindow = new BrowserWindow({
+              width: 1200,
+              height: 900,
+              title: `Cesium地球 - ${targetDomain}的路由追踪`,
+              webPreferences: {
+                nodeIntegration: true,
+                contextIsolation: false,
+              }
+            });
+
+            globeWindow.loadFile(getResourcePath('globe_cesium.html'));
+
+            if (isDev) {
+              globeWindow.webContents.openDevTools();
             }
-          });
 
-          globeWindow.loadFile(getResourcePath('globe_cesium.html'));
-
-          if (isDev) {
-            globeWindow.webContents.openDevTools();
+          } else {
+            event.sender.send('traceroute-output', '处理IP地理位置数据时出错。\n');
           }
-
-        } else {
-          event.sender.send('traceroute-output', '处理IP地理位置数据时出错。\n');
-        }
-      });
-    } else {
-      event.sender.send('traceroute-output', 'Handler.py脚本执行出错（无法生成traceroute JSON）。\n');
-    }
+        });
+      } else {
+        event.sender.send('traceroute-output', 'handler.py脚本执行出错（无法生成traceroute JSON）。\n');
+      }
+    });
+  }else{
+    event.sender.send('traceroute-output', 'input.py脚本执行出错。\n');
+  }
   });
 });
