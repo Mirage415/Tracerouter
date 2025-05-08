@@ -2,7 +2,6 @@ import argparse
 import os
 import re
 
-from lxml.objectify import set_default_parser
 
 
 class FileName:
