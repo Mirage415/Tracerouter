@@ -36,7 +36,9 @@
     "electron-builder": "^24.9.1"
   },
   "dependencies": {
-    "openai": "^4.95.1"
+    "nodejs-whisper": "^0.2.6",
+    "openai": "^4.95.1",
+    "whisper-node": "^1.1.1"
   },
   "build": {
     "appId": "com.tracerouter.app",

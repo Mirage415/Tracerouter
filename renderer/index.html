@@ -5,14 +5,13 @@
   <meta charset="utf-8" />
   <title>Voice Control Traceroute Visualization</title>
   <!-- Basic Libraries -->
-  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/IDMNYU/p5.js-speech@0.0.3/lib/p5.speech.js"></script> -->
+  <!-- 只保留p5.js和p5.sound.min.js，用于动画显示 -->
   <script src="lib/p5/p5.min.js"></script>
-  <script src="lib/p5/p5.speech.js"></script>
   <script src="lib/p5/addons/p5.sound.min.js"></script>
 
-  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script> -->
+  <!-- 引入nodejs-whisper相关的库 -->
+  <script src="../node_modules/nodejs-whisper/dist/nodejs-whisper.js"></script>
+
   <style>
     body {
       margin: 0;
@@ -233,12 +232,197 @@
       }
     }
 
-    // Voice recognition part
-    let speechRec;
-    let mic;
-    let lang = 'en-US'; // Set language to English
-    let textResult = "Waiting for voice input...";
+    // Nodejs-Whisper 语音识别相关代码
     let isRecognizing = false;
+    let audioRecorder = null;
+    let audioChunks = [];
+    let tempAudioFile = null;
+
+    // 初始化语音识别
+    async function initAudioCapture() {
+      try {
+        debugLog("正在初始化音频捕获...");
+
+        // 尝试使用Web Speech API作为备选方案
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+          debugLog("检测到Web Speech API可用，将作为备选方案");
+          window.webSpeechBackup = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+          window.webSpeechBackup.lang = 'zh-CN'; // 设置为中文
+          window.webSpeechBackup.continuous = false;
+          window.webSpeechBackup.interimResults = false;
+
+          window.webSpeechBackup.onresult = function (event) {
+            const transcript = event.results[0][0].transcript;
+            debugLog(`Web Speech API 识别结果: "${transcript}"`);
+            recognitionLog(transcript);
+
+            // 更新UI
+            const resultElement = document.getElementById('result');
+            let resultContent = resultElement.querySelector('.result-content');
+            if (resultContent) {
+              resultContent.textContent = transcript || '(未检测到语音)';
+            } else {
+              resultElement.innerHTML = `<div class="result-label">识别结果</div><div class="result-content">${transcript || '(未检测到语音)'}</div>`;
+            }
+
+            // 处理命令
+            if (transcript) {
+              processCommand(transcript);
+            }
+          };
+
+          window.webSpeechBackup.onerror = function (event) {
+            debugLog(`Web Speech API 错误: ${event.error}`);
+          };
+        }
+
+        // 获取麦克风流
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        debugLog("麦克风访问权限已获取");
+
+        // 创建MediaRecorder
+        audioRecorder = new MediaRecorder(stream);
+
+        // 监听数据可用事件
+        audioRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        // 监听录音停止事件
+        audioRecorder.onstop = async () => {
+          if (audioChunks.length === 0) {
+            debugLog("没有收集到音频数据");
+            return;
+          }
+
+          try {
+            debugLog("开始处理音频...");
+            const resultElement = document.getElementById('result');
+            let resultContent = resultElement.querySelector('.result-content');
+            if (resultContent) {
+              resultContent.textContent = "正在识别...";
+            }
+
+            // 创建音频Blob
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            audioChunks = []; // 清空数组以便下次录音
+
+            // 在Electron环境中处理音频 
+            if (hasElectronAPI) {
+              // 向主进程发送音频数据进行处理
+              debugLog("发送音频到主进程进行Whisper处理");
+
+              // 将Blob转换为ArrayBuffer
+              const arrayBuffer = await audioBlob.arrayBuffer();
+              const uint8Array = new Uint8Array(arrayBuffer);
+
+              // 使用临时文件保存音频
+              const tempFileName = `temp_audio_${Date.now()}.wav`;
+
+              // 通过Electron IPC调用nodejs-whisper处理
+              // 这需要在preload.js和main.js中添加相应的API
+              window.api.processWhisperAudio(uint8Array, tempFileName)
+                .then(transcription => {
+                  debugLog(`Whisper识别结果: "${transcription}"`);
+
+                  // 更新UI
+                  if (resultContent) {
+                    resultContent.textContent = transcription || '(未检测到语音)';
+                  }
+
+                  // 识别到内容后处理命令
+                  if (transcription) {
+                    processCommand(transcription);
+                  }
+
+                  // 如果仍处于识别状态，继续录音
+                  if (isRecognizing) {
+                    startRecording();
+                  }
+                })
+                .catch(error => {
+                  debugLog(`音频处理错误: ${error.message}`);
+                  console.error("音频处理错误:", error);
+
+                  // 尝试使用Web Speech API作为备选
+                  if (window.webSpeechBackup) {
+                    debugLog("尝试使用Web Speech API作为备选方案");
+                    try {
+                      window.webSpeechBackup.start();
+                      debugLog("已启动Web Speech API备选识别");
+                    } catch (webError) {
+                      debugLog(`Web Speech API启动失败: ${webError.message}`);
+                    }
+                  }
+                });
+            } else {
+              debugLog("无法处理音频：Electron API不可用");
+              if (resultContent) {
+                resultContent.textContent = "无法处理音频：Electron API不可用";
+              }
+            }
+          } catch (error) {
+            debugLog(`音频处理错误: ${error.message}`);
+            console.error("音频处理错误:", error);
+          }
+        };
+
+        return true;
+      } catch (error) {
+        debugLog(`音频捕获初始化失败: ${error.message}`);
+        console.error("音频捕获初始化错误:", error);
+        return false;
+      }
+    }
+
+    // 开始录音
+    function startRecording() {
+      if (!audioRecorder || audioRecorder.state === 'recording') {
+        return;
+      }
+
+      try {
+        audioChunks = [];
+        audioRecorder.start();
+        debugLog("开始录音...");
+
+        // 设置一个超时，5秒停止一次录音并进行处理
+        setTimeout(() => {
+          if (audioRecorder && audioRecorder.state === 'recording') {
+            audioRecorder.stop();
+            debugLog("录音段已结束，正在处理...");
+          }
+        }, 5000);
+      } catch (error) {
+        debugLog(`开始录音失败: ${error.message}`);
+      }
+    }
+
+    // 停止录音
+    function stopRecording() {
+      if (!audioRecorder || audioRecorder.state !== 'recording') {
+        return;
+      }
+
+      try {
+        audioRecorder.stop();
+        debugLog("录音已停止");
+
+        // 同时停止Web Speech API备选方案
+        if (window.webSpeechBackup) {
+          try {
+            window.webSpeechBackup.stop();
+            debugLog("Web Speech API备选方案已停止");
+          } catch (e) {
+            debugLog(`停止Web Speech API错误: ${e.message}`);
+          }
+        }
+      } catch (error) {
+        debugLog(`停止录音失败: ${error.message}`);
+      }
+    }
 
     // Process domain formatting
     function formatDomain(text) {
@@ -285,171 +469,108 @@
           .replace(/\.$/, '');
       }
 
-      debugLog(`Original input: "${text}" -> Processed domain: "${domain}"`);
+      debugLog(`原始输入: "${text}" -> 处理后域名: "${domain}"`);
       return domain;
     }
 
     // Check if Electron API is available (running in packaged app)
     const hasElectronAPI = window.api && window.api.runTraceroute && window.api.onOutput;
-    debugLog(`Electron API available: ${hasElectronAPI}`);
+    debugLog(`Electron API 可用: ${hasElectronAPI}`);
     if (!hasElectronAPI) {
-      debugLog("Warning: Electron API not available, some features will not work");
+      debugLog("警告: Electron API 不可用，某些功能将无法工作");
     }
 
     // Process recognized command
     function processCommand(txt) {
       // Standardize as domain format
       const domain = formatDomain(txt);
-      debugLog(`Processed domain: ${domain}`);
+      debugLog(`处理后域名: ${domain}`);
 
       // Construct complete traceroute command
       const command = `traceroute ${domain}`;
 
       if (hasElectronAPI) {
-        debugLog(`Executing command: ${command}`);
-        document.getElementById('traceOutput').innerHTML = `Executing: ${command}\nTracing route...\n`;
+        debugLog(`执行命令: ${command}`);
+        document.getElementById('traceOutput').innerHTML = `执行: ${command}\n正在追踪路由...\n`;
         // Call main process through API exposed in preload.js
         window.api.runTraceroute(command);
       } else {
-        debugLog(`Cannot execute command: Electron API not available`);
-        document.getElementById('traceOutput').innerHTML = "Error: Electron API not available, cannot execute command\n";
+        debugLog(`无法执行命令: Electron API 不可用`);
+        document.getElementById('traceOutput').innerHTML = "错误: Electron API 不可用，无法执行命令\n";
       }
     }
 
+    // 添加按钮事件处理
     document.getElementById('startBtn').onclick = async () => {
       try {
-        debugLog("Starting p5 speech recognition...");
+        debugLog("开始语音识别...");
 
-        // Use p5.speech directly
-        await getAudioContext().resume();
-        debugLog("Audio context resumed");
+        // 初始化音频捕获（如果未初始化）
+        if (!audioRecorder) {
+          const audioInitialized = await initAudioCapture();
+          if (!audioInitialized) {
+            throw new Error("无法初始化音频捕获");
+          }
+        }
 
-        // Reset status
-        isRecognizing = true;
+        // 更新UI
         const resultElement = document.getElementById('result');
         let resultContent = resultElement.querySelector('.result-content');
         if (resultContent) {
-          resultContent.textContent = 'Listening...';
+          resultContent.textContent = '正在听...';
         } else {
-          resultElement.innerHTML = `<div class="result-label">Recognition Result</div><div class="result-content">Listening...</div>`;
+          resultElement.innerHTML = `<div class="result-label">识别结果</div><div class="result-content">正在听...</div>`;
         }
+
         document.getElementById('startBtn').disabled = true;
         document.getElementById('stopBtn').disabled = false;
 
-        // Ensure microphone instance is created first
-        mic = new p5.AudioIn();
-        await new Promise((resolve, reject) => {
-          try {
-            mic.start(() => {
-              debugLog("Microphone started");
-              resolve();
-            }, (err) => {
-              const errorMsg = `Microphone start failed: ${err}`;
-              debugLog(errorMsg);
-              reject(new Error(errorMsg));
-            });
-          } catch (e) {
-            debugLog(`Error starting microphone: ${e.message}`);
-            reject(e);
-          }
-        });
-
-        // Ensure volume level can be correctly retrieved
-        setTimeout(() => {
-          const vol = mic.getLevel();
-          debugLog(`Microphone volume detection: ${vol}`);
-        }, 1000);
-
-        // Create new speech recognition instance
-        try {
-          speechRec = new p5.SpeechRec(lang, gotSpeech);
-          debugLog(`Created speech recognition instance, language: ${lang}`);
-
-          // Add more properties for debugging
-          speechRec.onError = function (err) {
-            debugLog(`Speech recognition error: ${err}`);
-          };
-
-          speechRec.onEnd = function () {
-            debugLog("Speech recognition session ended");
-            if (isRecognizing) {
-              debugLog("Restarting speech recognition");
-              setTimeout(() => {
-                try {
-                  speechRec.start(true, false);
-                } catch (e) {
-                  debugLog(`Failed to restart speech recognition: ${e.message}`);
-                }
-              }, 500); // Add short delay before retrying
-            }
-          };
-
-          // Add explicit audio result handler
-          speechRec.resultCallback = function (text) {
-            debugLog(`Speech recognition direct callback: "${text}"`);
-            recognitionLog(text);
-          };
-
-          // Start continuous recognition (continuous = true, interim = false)
-          speechRec.start(true, false);
-          debugLog("Speech recognition started, continuous mode");
-        } catch (err) {
-          debugLog(`Failed to create speech recognition instance: ${err.message}`);
-          throw err;
-        }
+        // 设置识别状态并开始录音
+        isRecognizing = true;
+        startRecording();
 
       } catch (error) {
-        debugLog(`Error: ${error.message}`);
-        console.error("Speech recognition error:", error);
+        debugLog(`启动语音识别失败: ${error.message}`);
+        console.error("语音识别启动错误:", error);
+
         const resultElement = document.getElementById('result');
         let resultContent = resultElement.querySelector('.result-content');
         if (resultContent) {
-          resultContent.textContent = `Start failed: ${error.message}`;
+          resultContent.textContent = `启动失败: ${error.message}`;
         } else {
-          resultElement.innerHTML = `<div class="result-label">Recognition Result</div><div class="result-content">Start failed: ${error.message}</div>`;
+          resultElement.innerHTML = `<div class="result-label">识别结果</div><div class="result-content">启动失败: ${error.message}</div>`;
         }
-        // Reset status
-        isRecognizing = false;
+
         document.getElementById('startBtn').disabled = false;
         document.getElementById('stopBtn').disabled = true;
       }
     };
 
     document.getElementById('stopBtn').onclick = () => {
-      debugLog("Stopping speech recognition");
+      debugLog("停止语音识别");
 
-      if (speechRec) {
-        // Try to stop speech recognition
-        try {
-          speechRec.stop();
-          debugLog("p5 speech recognition stopped");
-        } catch (e) {
-          debugLog(`Error stopping p5 speech recognition: ${e.message}`);
-          console.log("Error while stopping speech recognition:", e);
-        }
-      }
+      // 停止录音
+      stopRecording();
 
-      // Set status to stopped
+      // 更新状态
       isRecognizing = false;
 
-      // But don't clear existing recognition results, just mark as stopped
+      // 更新UI
       const resultElement = document.getElementById('result');
       let resultContent = resultElement.querySelector('.result-content');
-      // Keep existing content, just add indicator at the end
       if (resultContent) {
         const currentText = resultContent.textContent;
-        if (currentText && currentText !== '(Stopped)' && !currentText.endsWith('(Stopped)')) {
-          resultContent.textContent = `${currentText} (Stopped)`;
-        } else if (!currentText || currentText === '(Waiting for recognition...)') {
-          resultContent.textContent = '(Stopped)';
+        if (currentText && currentText !== '(已停止)' && !currentText.endsWith('(已停止)')) {
+          resultContent.textContent = `${currentText} (已停止)`;
+        } else if (!currentText || currentText === '(等待识别...)') {
+          resultContent.textContent = '(已停止)';
         }
       } else {
-        resultElement.innerHTML = `<div class="result-label">Recognition Result</div><div class="result-content">(Stopped)</div>`;
+        resultElement.innerHTML = `<div class="result-label">识别结果</div><div class="result-content">(已停止)</div>`;
       }
 
       document.getElementById('startBtn').disabled = false;
       document.getElementById('stopBtn').disabled = true;
-      textResult = "Speech recognition stopped";
     };
 
     // Test API button
@@ -549,6 +670,7 @@
     let curves = 150;
     let cx, cy;
     let angles = [], baseRs = [], phases1 = [], phases2 = [], speeds1 = [], speeds2 = [];
+    let mic; // Declare mic here so it's accessible in draw()
 
     function setup() {
       createCanvas(windowWidth, windowHeight);
@@ -563,7 +685,12 @@
         speeds2.push(random(0.02, 0.08));
       }
       stroke(255);
-      debugLog("p5.js canvas initialization complete");
+
+      // Initialize and start p5.AudioIn
+      mic = new p5.AudioIn();
+      mic.start();
+
+      debugLog("p5.js canvas initialization complete and mic started");
     }
 
     function draw() {
