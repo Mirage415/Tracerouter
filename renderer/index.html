@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 
 <head>
   <meta charset="utf-8" />
-  <title>语音控制Traceroute可视化</title>
-  <!-- 基础库 -->
+  <title>Voice Control Traceroute Visualization</title>
+  <!-- Basic Libraries -->
   <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/IDMNYU/p5.js-speech@0.0.3/lib/p5.speech.js"></script> -->
@@ -64,7 +64,7 @@
       min-height: 1.5em;
     }
 
-    /* 添加识别结果标签样式 */
+    /* Result label styles */
     .result-label {
       font-size: 0.8em;
       color: #05c9fa;
@@ -72,7 +72,7 @@
       font-weight: bold;
     }
 
-    /* 识别结果区域增强样式 */
+    /* Enhanced result area styles */
     .result-content {
       padding: 8px;
       background: rgba(5, 201, 250, 0.1);
@@ -143,52 +143,53 @@
 
 <body>
   <div id="ui-panel">
-    <h3>语音控制Traceroute</h3>
+    <h3>Voice Control Traceroute</h3>
     <div id="control-buttons">
-      <button id="startBtn">🎙️ 开始识别</button>
-      <button id="stopBtn" disabled>⏹️ 停止识别</button>
-      <button id="testBtn">测试API</button>
+      <button id="startBtn">🎙️ Start Recognition</button>
+      <button id="stopBtn" disabled>⏹️ Stop Recognition</button>
+      <button id="testBtn">Test API</button>
     </div>
     <div id="result">
-      <div class="result-label">识别结果</div>
-      <div class="result-content">（尚未开始）</div>
+      <div class="result-label">Recognition Result</div>
+      <div class="result-content">(Not started)</div>
     </div>
-    <p style="font-size:0.8em;color:#ccc;">直接说出域名，例如："google.com" 或 "百度"</p>
+    <p style="font-size:0.8em;color:#ccc;">Say a domain name, for example: "google.com" or "baidu"</p>
 
-    <!-- 添加手动输入框 -->
-    <input type="text" id="rawInput" placeholder="或直接输入域名...">
-    <button id="submitBtn">提交</button>
+    <!-- Add manual input field -->
+    <input type="text" id="rawInput" placeholder="Or directly enter domain name...">
+    <button id="submitBtn">Submit</button>
   </div>
 
   <div id="output-panel" style="top: 300px;">
-    <h3>执行结果：</h3>
+    <h3>Execution Result:</h3>
     <div id="traceOutput"></div>
   </div>
 
-  <!-- 新增调试信息面板 -->
+  <!-- Debug information panel -->
   <div id="debugPanel">
-    <h3>调试信息：</h3>
-    <div id="debugOutput">等待调试信息...</div>
-    <!-- 添加专门的识别结果调试区 -->
-    <h3 style="margin-top: 15px; color: #ff0;">识别文本调试：</h3>
+    <h3>Debug Information:</h3>
+    <div id="debugOutput">Waiting for debug info...</div>
+    <!-- Add dedicated recognition result debug area -->
+    <h3 style="margin-top: 15px; color: #ff0;">Recognition Text Debug:</h3>
     <div id="recognitionDebug"
-      style="color: #ff0; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px; margin-top: 5px;">等待语音输入...
+      style="color: #ff0; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px; margin-top: 5px;">Waiting for
+      voice input...
     </div>
   </div>
 
   <script>
-    // 自动执行traceroute当输入框内容变化并失去焦点或按下回车
+    // Auto-execute traceroute when input changes and loses focus or Enter key is pressed
     const rawInput = document.getElementById('rawInput');
     rawInput.addEventListener('change', () => {
       const domain = rawInput.value.trim();
       if (domain) {
-        debugLog(`自动输入域名: ${domain}`);
+        debugLog(`Auto input domain: ${domain}`);
         const resultElement = document.getElementById('result');
         let resultContent = resultElement.querySelector('.result-content');
         if (resultContent) {
           resultContent.textContent = domain;
         } else {
-          resultElement.innerHTML = `<div class="result-label">识别结果</div><div class="result-content">${domain}</div>`;
+          resultElement.innerHTML = `<div class="result-label">Recognition Result</div><div class="result-content">${domain}</div>`;
         }
         processCommand(domain);
         rawInput.value = '';
@@ -198,13 +199,13 @@
       if (e.key === 'Enter') {
         const domain = rawInput.value.trim();
         if (domain) {
-          debugLog(`自动输入域名: ${domain}`);
+          debugLog(`Auto input domain: ${domain}`);
           const resultElement = document.getElementById('result');
           let resultContent = resultElement.querySelector('.result-content');
           if (resultContent) {
             resultContent.textContent = domain;
           } else {
-            resultElement.innerHTML = `<div class="result-label">识别结果</div><div class="result-content">${domain}</div>`;
+            resultElement.innerHTML = `<div class="result-label">Recognition Result</div><div class="result-content">${domain}</div>`;
           }
           processCommand(domain);
           rawInput.value = '';
@@ -214,7 +215,7 @@
   </script>
 
   <script>
-    // 添加调试日志函数
+    // Add debug log function
     function debugLog(message) {
       const debugElem = document.getElementById('debugOutput');
       const timestamp = new Date().toLocaleTimeString();
@@ -223,197 +224,191 @@
       console.log(`[DEBUG] ${message}`);
     }
 
-    // 添加专门的识别文本日志函数
+    // Add dedicated recognition text log function
     function recognitionLog(text) {
       const recognitionDebug = document.getElementById('recognitionDebug');
       if (recognitionDebug) {
-        recognitionDebug.innerHTML = `<span style="color:#f0f;">"${text || '无文本'}"</span>`;
+        recognitionDebug.innerHTML = `<span style="color:#f0f;">"${text || 'No text'}"</span>`;
         console.log(`[RECOGNITION] "${text}"`);
       }
     }
 
-    // 语音识别部分
+    // Voice recognition part
     let speechRec;
     let mic;
-    let lang = 'zh-CN'; // 语言设置为中文
-    let textResult = "等待语音输入...";
+    let lang = 'en-US'; // Set language to English
+    let textResult = "Waiting for voice input...";
     let isRecognizing = false;
 
-    // 处理域名格式化
+    // Process domain formatting
     function formatDomain(text) {
-      // 移除可能存在的"traceroute"关键字
+      // Remove possible "traceroute" keyword
       let domain = text.toLowerCase().replace(/traceroute\s+/g, '').trim();
 
-      // 移除尾部的标点符号（如句号、逗号、感叹号等）
-      domain = domain.replace(/[.,!?;:'"，。！？；：''""）】》〉）]\s*$/g, '').trim();
+      // Remove trailing punctuation (like period, comma, exclamation mark, etc.)
+      domain = domain.replace(/[.,!?;:'"）】》〉）]\s*$/g, '').trim();
 
-      // 移除前后的标点符号和特殊字符
+      // Remove punctuation and special characters from the beginning and end
       domain = domain.replace(/^[\s"'《【（\['"\(]+|[\s"'》】）\]'"\)]+$/g, '').trim();
 
-      // 处理常见域名简写
+      // Handle common domain shortcuts
       const domainMap = {
-        '谷歌': 'google.com',
-        '百度': 'baidu.com',
         'google': 'google.com',
         'baidu': 'baidu.com',
-        '必应': 'bing.com',
         'bing': 'bing.com',
-        '雅虎': 'yahoo.com',
         'yahoo': 'yahoo.com',
-        '淘宝': 'taobao.com',
         'taobao': 'taobao.com',
-        '微软': 'microsoft.com',
         'microsoft': 'microsoft.com',
-        '腾讯': 'qq.com',
-        '网易': '163.com'
+        'tencent': 'qq.com',
+        'netease': '163.com'
       };
 
-      // 检查是否是常见域名简写
+      // Check if it's a common domain shortcut
       if (domainMap[domain]) {
         domain = domainMap[domain];
       }
 
-      // 如果没有.com, .cn等后缀，自动添加.com
+      // If there's no .com, .cn or other suffix, automatically add .com
       if (!/\.\w+$/.test(domain)) {
         domain = domain + '.com';
       }
 
-      // 确保域名格式正确（只包含字母、数字、点和连字符）
+      // Ensure domain format is correct (only contains letters, numbers, dots and hyphens)
       if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain)) {
-        // 尝试修复常见问题
+        // Try to fix common issues
         domain = domain
-          // 移除所有空格
+          // Remove all spaces
           .replace(/\s+/g, '')
-          // 将多个点缩减为一个点
+          // Reduce multiple dots to a single dot
           .replace(/\.{2,}/g, '.')
-          // 清理末尾的点
+          // Clean trailing dots
           .replace(/\.$/, '');
       }
 
-      debugLog(`原始输入: "${text}" -> 处理后域名: "${domain}"`);
+      debugLog(`Original input: "${text}" -> Processed domain: "${domain}"`);
       return domain;
     }
 
-    // 检查是否有Electron API可用（在打包应用中运行）
+    // Check if Electron API is available (running in packaged app)
     const hasElectronAPI = window.api && window.api.runTraceroute && window.api.onOutput;
-    debugLog(`Electron API 可用: ${hasElectronAPI}`);
+    debugLog(`Electron API available: ${hasElectronAPI}`);
     if (!hasElectronAPI) {
-      debugLog("警告: Electron API 不可用，部分功能将无法使用");
+      debugLog("Warning: Electron API not available, some features will not work");
     }
 
-    // 处理识别的命令
+    // Process recognized command
     function processCommand(txt) {
-      // 统一为域名格式
+      // Standardize as domain format
       const domain = formatDomain(txt);
-      debugLog(`处理后的域名: ${domain}`);
+      debugLog(`Processed domain: ${domain}`);
 
-      // 构造完整的traceroute命令
+      // Construct complete traceroute command
       const command = `traceroute ${domain}`;
 
       if (hasElectronAPI) {
-        debugLog(`执行命令: ${command}`);
-        document.getElementById('traceOutput').innerHTML = `执行: ${command}\n正在追踪路由...\n`;
-        // 通过preload.js中暴露的API调用主进程
+        debugLog(`Executing command: ${command}`);
+        document.getElementById('traceOutput').innerHTML = `Executing: ${command}\nTracing route...\n`;
+        // Call main process through API exposed in preload.js
         window.api.runTraceroute(command);
       } else {
-        debugLog(`无法执行命令: Electron API不可用`);
-        document.getElementById('traceOutput').innerHTML = "错误: Electron API不可用，无法执行命令\n";
+        debugLog(`Cannot execute command: Electron API not available`);
+        document.getElementById('traceOutput').innerHTML = "Error: Electron API not available, cannot execute command\n";
       }
     }
 
     document.getElementById('startBtn').onclick = async () => {
       try {
-        debugLog("开始p5语音识别...");
+        debugLog("Starting p5 speech recognition...");
 
-        // 直接使用p5.speech
+        // Use p5.speech directly
         await getAudioContext().resume();
-        debugLog("音频上下文已恢复");
+        debugLog("Audio context resumed");
 
-        // 重置状态
+        // Reset status
         isRecognizing = true;
         const resultElement = document.getElementById('result');
         let resultContent = resultElement.querySelector('.result-content');
         if (resultContent) {
-          resultContent.textContent = '正在聆听...';
+          resultContent.textContent = 'Listening...';
         } else {
-          resultElement.innerHTML = `<div class="result-label">识别结果</div><div class="result-content">正在聆听...</div>`;
+          resultElement.innerHTML = `<div class="result-label">Recognition Result</div><div class="result-content">Listening...</div>`;
         }
         document.getElementById('startBtn').disabled = true;
         document.getElementById('stopBtn').disabled = false;
 
-        // 确保先创建麦克风实例
+        // Ensure microphone instance is created first
         mic = new p5.AudioIn();
         await new Promise((resolve, reject) => {
           try {
             mic.start(() => {
-              debugLog("麦克风已启动");
+              debugLog("Microphone started");
               resolve();
             }, (err) => {
-              const errorMsg = `麦克风启动失败: ${err}`;
+              const errorMsg = `Microphone start failed: ${err}`;
               debugLog(errorMsg);
               reject(new Error(errorMsg));
             });
           } catch (e) {
-            debugLog(`启动麦克风时出错: ${e.message}`);
+            debugLog(`Error starting microphone: ${e.message}`);
             reject(e);
           }
         });
 
-        // 确保音量级别能够正确获取
+        // Ensure volume level can be correctly retrieved
         setTimeout(() => {
           const vol = mic.getLevel();
-          debugLog(`麦克风音量检测: ${vol}`);
+          debugLog(`Microphone volume detection: ${vol}`);
         }, 1000);
 
-        // 创建新的语音识别实例
+        // Create new speech recognition instance
         try {
           speechRec = new p5.SpeechRec(lang, gotSpeech);
-          debugLog(`创建语音识别实例，语言: ${lang}`);
+          debugLog(`Created speech recognition instance, language: ${lang}`);
 
-          // 添加更多属性进行调试
+          // Add more properties for debugging
           speechRec.onError = function (err) {
-            debugLog(`语音识别错误: ${err}`);
+            debugLog(`Speech recognition error: ${err}`);
           };
 
           speechRec.onEnd = function () {
-            debugLog("语音识别会话结束");
+            debugLog("Speech recognition session ended");
             if (isRecognizing) {
-              debugLog("重新启动语音识别");
+              debugLog("Restarting speech recognition");
               setTimeout(() => {
                 try {
                   speechRec.start(true, false);
                 } catch (e) {
-                  debugLog(`重启语音识别失败: ${e.message}`);
+                  debugLog(`Failed to restart speech recognition: ${e.message}`);
                 }
-              }, 500); // 添加短暂延迟后重试
+              }, 500); // Add short delay before retrying
             }
           };
 
-          // 添加显式的音频结果处理器
+          // Add explicit audio result handler
           speechRec.resultCallback = function (text) {
-            debugLog(`语音识别直接回调: "${text}"`);
+            debugLog(`Speech recognition direct callback: "${text}"`);
             recognitionLog(text);
           };
 
-          // 开始连续识别 (continuous = true, interim = false)
+          // Start continuous recognition (continuous = true, interim = false)
           speechRec.start(true, false);
-          debugLog("语音识别已启动，连续模式");
+          debugLog("Speech recognition started, continuous mode");
         } catch (err) {
-          debugLog(`创建语音识别实例失败: ${err.message}`);
+          debugLog(`Failed to create speech recognition instance: ${err.message}`);
           throw err;
         }
 
       } catch (error) {
-        debugLog(`错误: ${error.message}`);
-        console.error("语音识别错误:", error);
+        debugLog(`Error: ${error.message}`);
+        console.error("Speech recognition error:", error);
         const resultElement = document.getElementById('result');
         let resultContent = resultElement.querySelector('.result-content');
         if (resultContent) {
-          resultContent.textContent = `启动失败: ${error.message}`;
+          resultContent.textContent = `Start failed: ${error.message}`;
         } else {
-          resultElement.innerHTML = `<div class="result-label">识别结果</div><div class="result-content">启动失败: ${error.message}</div>`;
+          resultElement.innerHTML = `<div class="result-label">Recognition Result</div><div class="result-content">Start failed: ${error.message}</div>`;
         }
-        // 重置状态
+        // Reset status
         isRecognizing = false;
         document.getElementById('startBtn').disabled = false;
         document.getElementById('stopBtn').disabled = true;
@@ -421,78 +416,78 @@
     };
 
     document.getElementById('stopBtn').onclick = () => {
-      debugLog("停止语音识别");
+      debugLog("Stopping speech recognition");
 
       if (speechRec) {
-        // 尝试停止语音识别
+        // Try to stop speech recognition
         try {
           speechRec.stop();
-          debugLog("p5语音识别已停止");
+          debugLog("p5 speech recognition stopped");
         } catch (e) {
-          debugLog(`停止p5语音识别出错: ${e.message}`);
-          console.log("停止语音识别时出错:", e);
+          debugLog(`Error stopping p5 speech recognition: ${e.message}`);
+          console.log("Error while stopping speech recognition:", e);
         }
       }
 
-      // 设置状态为已停止
+      // Set status to stopped
       isRecognizing = false;
 
-      // 但不清除已有的识别结果，只标识已停止
+      // But don't clear existing recognition results, just mark as stopped
       const resultElement = document.getElementById('result');
       let resultContent = resultElement.querySelector('.result-content');
-      // 保留现有内容，只在末尾添加标识
+      // Keep existing content, just add indicator at the end
       if (resultContent) {
         const currentText = resultContent.textContent;
-        if (currentText && currentText !== '（已停止）' && !currentText.endsWith('（已停止）')) {
-          resultContent.textContent = `${currentText} （已停止）`;
-        } else if (!currentText || currentText === '(等待识别...)') {
-          resultContent.textContent = '（已停止）';
+        if (currentText && currentText !== '(Stopped)' && !currentText.endsWith('(Stopped)')) {
+          resultContent.textContent = `${currentText} (Stopped)`;
+        } else if (!currentText || currentText === '(Waiting for recognition...)') {
+          resultContent.textContent = '(Stopped)';
         }
       } else {
-        resultElement.innerHTML = `<div class="result-label">识别结果</div><div class="result-content">（已停止）</div>`;
+        resultElement.innerHTML = `<div class="result-label">Recognition Result</div><div class="result-content">(Stopped)</div>`;
       }
 
       document.getElementById('startBtn').disabled = false;
       document.getElementById('stopBtn').disabled = true;
-      textResult = "语音识别已停止";
+      textResult = "Speech recognition stopped";
     };
 
-    // 测试API按钮
+    // Test API button
     document.getElementById('testBtn').onclick = () => {
-      debugLog("测试按钮点击");
+      debugLog("Test button clicked");
       const testDomain = "google.com";
       const resultElement = document.getElementById('result');
       let resultContent = resultElement.querySelector('.result-content');
       if (resultContent) {
         resultContent.textContent = testDomain;
       } else {
-        resultElement.innerHTML = `<div class="result-label">识别结果</div><div class="result-content">${testDomain}</div>`;
+        resultElement.innerHTML = `<div class="result-label">Recognition Result</div><div class="result-content">${testDomain}</div>`;
       }
       processCommand(testDomain);
     };
 
-    // 手动输入提交按钮
+    // Manual input submit button
     document.getElementById('submitBtn').onclick = () => {
       const inputField = document.getElementById('rawInput');
       const domain = inputField.value.trim();
       if (domain) {
-        debugLog(`手动输入域名: ${domain}`);
+        debugLog(`Manual domain input: ${domain}`);
         const resultElement = document.getElementById('result');
         let resultContent = resultElement.querySelector('.result-content');
         if (resultContent) {
           resultContent.textContent = domain;
         } else {
-          resultElement.innerHTML = `<div class="result-label">识别结果</div><div class="result-content">${domain}</div>`;
+          resultElement.innerHTML = `<div class="result-label">Recognition Result</div><div class="result-content">${domain}</div>`;
         }
         processCommand(domain);
-        // 清空输入框
+        // Clear input field
         inputField.value = '';
       } else {
-        debugLog("未输入域名");
+        debugLog("No domain entered");
       }
     };
 
-    // 允许回车键提交
+    // Allow Enter key for submission
     document.getElementById('rawInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         document.getElementById('submitBtn').click();
@@ -500,57 +495,57 @@
     });
 
     function gotSpeech() {
-      debugLog("接收到p5语音识别结果");
-      // 添加更详细的调试信息
-      debugLog(`speechRec状态: resultValue=${speechRec.resultValue}, resultString=${speechRec.resultString}, isRecognizing=${isRecognizing}`);
+      debugLog("Received p5 speech recognition result");
+      // Add more detailed debug information
+      debugLog(`speechRec status: resultValue=${speechRec.resultValue}, resultString=${speechRec.resultString}, isRecognizing=${isRecognizing}`);
 
-      // 直接显示原始resultString，无论是否有值
+      // Display original resultString directly, whether it has a value or not
       recognitionLog(speechRec.resultString);
 
-      // 关键修改：无论isRecognizing是什么状态，都显示结果
+      // Key modification: display results regardless of isRecognizing status
       // if (isRecognizing) {
-      if (speechRec.resultString) {  // 只要有结果，就显示并处理
+      if (speechRec.resultString) {  // As long as there's a result, display and process
         const txt = speechRec.resultString.trim();
-        debugLog(`p5识别文本: "${txt}"`);
+        debugLog(`p5 recognition text: "${txt}"`);
         textResult = txt;
 
-        // 更新识别结果的显示方式
+        // Update the way recognition results are displayed
         const resultElement = document.getElementById('result');
-        // 保留label，只更新content部分
+        // Keep label, only update content part
         let resultContent = resultElement.querySelector('.result-content');
         if (resultContent) {
-          resultContent.textContent = txt || '(等待识别...)';
+          resultContent.textContent = txt || '(Waiting for recognition...)';
         } else {
-          // 如果没有找到result-content元素，回退到旧方式
-          resultElement.innerHTML = `<div class="result-label">识别结果</div><div class="result-content">${txt || '(等待识别...)'}</div>`;
+          // If result-content element not found, fall back to old way
+          resultElement.innerHTML = `<div class="result-label">Recognition Result</div><div class="result-content">${txt || '(Waiting for recognition...)'}</div>`;
         }
 
-        // 只有当文本不为空时才处理命令
+        // Only process command when text is not empty
         if (txt) {
           processCommand(txt);
         }
       } else {
-        debugLog(`p5语音识别已停止或无结果: isRecognizing=${isRecognizing}`);
+        debugLog(`p5 speech recognition stopped or no result: isRecognizing=${isRecognizing}`);
       }
     }
 
-    // 如果在Electron环境中，设置接收输出的回调
+    // If in Electron environment, set callback to receive output
     if (hasElectronAPI) {
-      debugLog("设置Electron API输出回调");
+      debugLog("Setting up Electron API output callback");
       window.api.onOutput((data) => {
-        debugLog(`接收到输出: ${data.substring(0, 50)}...`);
+        debugLog(`Received output: ${data.substring(0, 50)}...`);
         const outputElem = document.getElementById('traceOutput');
         outputElem.innerHTML += data;
-        outputElem.scrollTop = outputElem.scrollHeight; // 自动滚动到底部
+        outputElem.scrollTop = outputElem.scrollHeight; // Automatically scroll to bottom
       });
     } else {
-      document.getElementById('traceOutput').innerHTML = "未检测到Electron API，无法执行traceroute命令。";
+      document.getElementById('traceOutput').innerHTML = "Electron API not detected, cannot execute traceroute command.";
     }
 
-    // 检查浏览器语音识别支持
-    debugLog("使用p5.speech进行语音识别");
+    // Check browser speech recognition support
+    debugLog("Using p5.speech for speech recognition");
 
-    // 波形动画部分
+    // Waveform animation part
     let curves = 150;
     let cx, cy;
     let angles = [], baseRs = [], phases1 = [], phases2 = [], speeds1 = [], speeds2 = [];
@@ -568,15 +563,15 @@
         speeds2.push(random(0.02, 0.08));
       }
       stroke(255);
-      debugLog("p5.js画布初始化完成");
+      debugLog("p5.js canvas initialization complete");
     }
 
     function draw() {
       background(20);
       let vol = mic ? mic.getLevel() : 0;
-      // 偶尔记录音量级别
+      // Occasionally record volume level
       if (frameCount % 60 === 0 && mic) {
-        debugLog(`当前麦克风音量: ${vol.toFixed(4)}`);
+        debugLog(`Current microphone volume: ${vol.toFixed(4)}`);
       }
 
       let maxAmp = map(vol, 0, 0.3, 0, height * 0.15);
@@ -599,29 +594,29 @@
       resizeCanvas(windowWidth, windowHeight);
       cx = width / 2;
       cy = height / 2;
-      debugLog("窗口大小调整，画布已重置");
+      debugLog("Window resized, canvas reset");
     }
 
-    // 页面加载完成
+    // Page load complete
     window.onload = function () {
-      debugLog("页面加载完成");
+      debugLog("Page loading complete");
 
-      // 检查p5.speech是否正确加载
+      // Check if p5.speech is loaded correctly
       if (typeof p5.SpeechRec !== 'function') {
-        debugLog("错误: p5.speech库未正确加载");
-        document.getElementById('debugOutput').innerHTML += '<div style="color:red;font-weight:bold">警告: p5.speech库未正确加载，语音识别功能将不可用</div>';
+        debugLog("Error: p5.speech library not loaded correctly");
+        document.getElementById('debugOutput').innerHTML += '<div style="color:red;font-weight:bold">Warning: p5.speech library not loaded correctly, speech recognition feature will not be available</div>';
       } else {
-        debugLog("p5.speech库已正确加载");
-        // 检查speechRec是否是期望的对象
+        debugLog("p5.speech library loaded correctly");
+        // Check if speechRec is the expected object
         const testRec = new p5.SpeechRec();
-        debugLog(`p5.SpeechRec测试: ${Object.keys(testRec).join(", ")}`);
+        debugLog(`p5.SpeechRec test: ${Object.keys(testRec).join(", ")}`);
       }
 
-      // 检查AudioContext支持
+      // Check AudioContext support
       if (typeof window.AudioContext !== 'undefined' || typeof window.webkitAudioContext !== 'undefined') {
-        debugLog("浏览器支持AudioContext");
+        debugLog("Browser supports AudioContext");
       } else {
-        debugLog("警告: 浏览器不支持AudioContext，语音识别可能无法工作");
+        debugLog("Warning: Browser does not support AudioContext, speech recognition may not work");
       }
     };
   </script>
