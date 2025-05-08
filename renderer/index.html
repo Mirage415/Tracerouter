@@ -155,100 +155,108 @@
     <p style="font-size:0.8em;color:#ccc;">Say a domain name, for example: "google.com" or "baidu"</p>
 
     <!-- <button id="exportOptionsBtn">Output json</button> -->
-     <!-- 在合适位置加按钮 -->
-<button id="exportOptionsBtn">Export</button>
+    <!-- 在合适位置加按钮 -->
+    <button id="exportOptionsBtn">Export</button>
 
-<!-- 弹窗表单（初始隐藏） -->
-<div id="optionsModal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:100;background:rgba(0,0,0,0.4);">
-  <div style="background:#222;padding:20px;border-radius:8px;position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);min-width:350px;">
-    <h3 style="margin-top:0;">Edit</h3>
-    <form id="optionsForm">
-      <div style="display:flex;align-items:center;margin-bottom:8px;">
-        <label style="width:120px;">package_size</label>
-        <input name="package_size" type="number" value="64" />
+    <!-- 弹窗表单（初始隐藏） -->
+    <div id="optionsModal"
+      style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:100;background:rgba(0,0,0,0.4);">
+      <div
+        style="background:#222;padding:20px;border-radius:8px;position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);min-width:350px;">
+        <h3 style="margin-top:0;">Edit</h3>
+        <form id="optionsForm">
+          <div style="display:flex;align-items:center;margin-bottom:8px;">
+            <label style="width:120px;">package_size</label>
+            <input name="package_size" type="number" value="64" />
+          </div>
+          <div style="display:flex;align-items:center;margin-bottom:8px;">
+            <label style="width:120px;">series_count</label>
+            <input name="series_count" type="number" value="1" />
+          </div>
+          <div style="display:flex;align-items:center;margin-bottom:8px;">
+            <label style="width:120px;">probe_sequence</label>
+            <input name="probe_sequence" type="text" value="udp,tcp,icmp" placeholder="用逗号分隔" />
+          </div>
+          <div style="display:flex;align-items:center;margin-bottom:8px;">
+            <label style="width:120px;">queries</label>
+            <input name="queries" type="number" value="1" />
+          </div>
+          <div style="display:flex;align-items:center;margin-bottom:8px;">
+            <label style="width:120px;">series_interval</label>
+            <input name="series_interval" type="number" value="100" />
+          </div>
+          <div style="display:flex;align-items:center;margin-bottom:8px;">
+            <label style="width:120px;">z</label>
+            <input name="z" type="number" value="0" />
+          </div>
+          <div style="display:flex;align-items:center;margin-bottom:8px;">
+            <label style="width:120px;">max_hops</label>
+            <input name="max_hops" type="number" value="30" />
+          </div>
+          <div style="display:flex;align-items:center;margin-bottom:8px;">
+            <label style="width:120px;">wait</label>
+            <input name="wait" type="number" value="5000" />
+          </div>
+          <div style="display:flex;align-items:center;margin-bottom:8px;">
+            <label style="width:120px;">no_resolve</label>
+            <select name="no_resolve">
+              <option value="false">False</option>
+              <option value="true">True</option>
+            </select>
+          </div>
+          <div style="text-align:right;">
+            <button type="button" id="exportOptionsSubmit">Export</button>
+            <button type="button" id="exportOptionsCancel">Cancel</button>
+          </div>
+        </form>
       </div>
-      <div style="display:flex;align-items:center;margin-bottom:8px;">
-        <label style="width:120px;">series_count</label>
-        <input name="series_count" type="number" value="1" />
-      </div>
-      <div style="display:flex;align-items:center;margin-bottom:8px;">
-        <label style="width:120px;">probe_sequence</label>
-        <input name="probe_sequence" type="text" value="udp,tcp,icmp" placeholder="用逗号分隔" />
-      </div>
-      <div style="display:flex;align-items:center;margin-bottom:8px;">
-        <label style="width:120px;">queries</label>
-        <input name="queries" type="number" value="1" />
-      </div>
-      <div style="display:flex;align-items:center;margin-bottom:8px;">
-        <label style="width:120px;">series_interval</label>
-        <input name="series_interval" type="number" value="100" />
-      </div>
-      <div style="display:flex;align-items:center;margin-bottom:8px;">
-        <label style="width:120px;">z</label>
-        <input name="z" type="number" value="0" />
-      </div>
-      <div style="display:flex;align-items:center;margin-bottom:8px;">
-        <label style="width:120px;">max_hops</label>
-        <input name="max_hops" type="number" value="30" />
-      </div>
-      <div style="display:flex;align-items:center;margin-bottom:8px;">
-        <label style="width:120px;">wait</label>
-        <input name="wait" type="number" value="5000" />
-      </div>
-      <div style="display:flex;align-items:center;margin-bottom:8px;">
-        <label style="width:120px;">no_resolve</label>
-        <select name="no_resolve">
-          <option value="false">False</option>
-          <option value="true">True</option>
-        </select>
-      </div>
-      <div style="text-align:right;">
-        <button type="button" id="exportOptionsSubmit">Export</button>
-        <button type="button" id="exportOptionsCancel">Cancel</button>
-      </div>
-    </form>
-  </div>
-</div>
+    </div>
 
-<script>
-// 显示弹窗
-document.getElementById('exportOptionsBtn').onclick = () => {
-  document.getElementById('optionsModal').style.display = 'block';
-};
-// 取消按钮
-document.getElementById('exportOptionsCancel').onclick = () => {
-  document.getElementById('optionsModal').style.display = 'none';
-};
-// 导出按钮
-document.getElementById('exportOptionsSubmit').onclick = () => {
-  const form = document.getElementById('optionsForm');
-  const data = new FormData(form);
-  const options = {
-    package_size: Number(data.get('package_size')),
-    series_count: Number(data.get('series_count')),
-    probe_sequence: data.get('probe_sequence').split(',').map(s=>s.trim()),
-    queries: Number(data.get('queries')),
-    series_interval: Number(data.get('series_interval')),
-    z: Number(data.get('z')),
-    max_hops: Number(data.get('max_hops')),
-    wait: Number(data.get('wait')),
-    no_resolve: data.get('no_resolve') === 'true'
-  };
-  // 直接调用 Electron 主进程保存
-  if (window.api && window.api.saveOptionJson) {
-    window.api.saveOptionJson(JSON.stringify(options, null, 2))
-      .then(() => {
-        debugLog('option.json 已保存到程序当前目录');
-      })
-      .catch(err => {
-        debugLog('保存 option.json 失败: ' + err.message);
-      });
-    document.getElementById('optionsModal').style.display = 'none';
-  } else {
-    alert('当前环境不支持直接保存到程序目录。');
-  }
-};
-</script>
+    <script>
+      // 显示弹窗
+      document.getElementById('exportOptionsBtn').onclick = () => {
+        document.getElementById('optionsModal').style.display = 'block';
+      };
+      // 取消按钮
+      document.getElementById('exportOptionsCancel').onclick = () => {
+        document.getElementById('optionsModal').style.display = 'none';
+      };
+      // 导出按钮
+      document.getElementById('exportOptionsSubmit').onclick = () => {
+        const form = document.getElementById('optionsForm');
+        const data = new FormData(form);
+        const options = {
+          package_size: Number(data.get('package_size')),
+          series_count: Number(data.get('series_count')),
+          probe_sequence: data.get('probe_sequence').split(',').map(s => s.trim()),
+          queries: Number(data.get('queries')),
+          series_interval: Number(data.get('series_interval')),
+          z: Number(data.get('z')),
+          max_hops: Number(data.get('max_hops')),
+          wait: Number(data.get('wait')),
+          no_resolve: data.get('no_resolve') === 'true'
+        };
+        // 直接保存到renderer目录下，无需弹窗
+        if (window.api && window.api.saveFileToRendererDir) {
+          // Electron 环境，调用主进程API保存文件
+          window.api.saveFileToRendererDir('option.json', JSON.stringify(options, null, 2))
+            .then(() => {
+              debugLog('option.json 已保存到 renderer 目录');
+            })
+            .catch(err => {
+              debugLog('保存 option.json 失败: ' + err.message);
+            });
+        } else {
+          debugLog('Electron API 不可用，无法直接保存到 renderer 目录');
+        }
+        const blob = new Blob([JSON.stringify(options, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'option.json'; // 文件名固定为 option.json
+        a.click();
+        document.getElementById('optionsModal').style.display = 'none';
+      };
+    </script>
 
 
     <!-- <button id="batchBtn">batch input</button>
@@ -392,106 +400,219 @@ document.getElementById('exportOptionsSubmit').onclick = () => {
           };
         }
 
-        // 获取麦克风流
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        debugLog("麦克风访问权限已获取");
+        try {
+          // 获取麦克风流
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+              channelCount: 1,
+              sampleRate: 16000
+            }
+          });
+          debugLog("麦克风访问权限已获取，使用优化的音频参数");
 
-        // 创建MediaRecorder
-        audioRecorder = new MediaRecorder(stream);
+          // 创建MediaRecorder，使用高质量WAV格式
+          audioRecorder = new MediaRecorder(stream, {
+            mimeType: 'audio/webm;codecs=pcm',
+            audioBitsPerSecond: 16000
+          });
+          debugLog(`创建MediaRecorder，使用类型: ${audioRecorder.mimeType}`);
 
-        // 监听数据可用事件
-        audioRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunks.push(event.data);
-          }
-        };
+          // 监听数据可用事件
+          audioRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              audioChunks.push(event.data);
+              debugLog(`收集到音频块，大小: ${event.data.size} 字节`);
+            }
+          };
 
-        // 监听录音停止事件
-        audioRecorder.onstop = async () => {
-          if (audioChunks.length === 0) {
-            debugLog("没有收集到音频数据");
-            return;
-          }
+          // 监听录音停止事件
+          audioRecorder.onstop = async () => {
+            if (audioChunks.length === 0) {
+              debugLog("没有收集到音频数据");
 
-          try {
-            debugLog("开始处理音频...");
-            const resultElement = document.getElementById('result');
-            let resultContent = resultElement.querySelector('.result-content');
-            if (resultContent) {
-              resultContent.textContent = "正在识别...";
+              // 如果仍处于识别状态，重新开始录音
+              if (isRecognizing) {
+                debugLog("没有音频数据，但识别仍在进行，重新开始录音");
+                setTimeout(() => {
+                  startRecording();
+                }, 500);
+              }
+              return;
             }
 
-            // 创建音频Blob
-            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-            audioChunks = []; // 清空数组以便下次录音
-
-            // 在Electron环境中处理音频 
-            if (hasElectronAPI) {
-              // 向主进程发送音频数据进行处理
-              debugLog("发送音频到主进程进行Whisper处理");
-
-              // 将Blob转换为ArrayBuffer
-              const arrayBuffer = await audioBlob.arrayBuffer();
-              const uint8Array = new Uint8Array(arrayBuffer);
-
-              // 使用临时文件保存音频
-              const tempFileName = `temp_audio_${Date.now()}.wav`;
-
-              // 通过Electron IPC调用nodejs-whisper处理
-              // 这需要在preload.js和main.js中添加相应的API
-              window.api.processWhisperAudio(uint8Array, tempFileName)
-                .then(transcription => {
-                  debugLog(`Whisper识别结果: "${transcription}"`);
-
-                  // 更新UI
-                  if (resultContent) {
-                    resultContent.textContent = transcription || '(未检测到语音)';
-                  }
-
-                  // 识别到内容后处理命令
-                  if (transcription) {
-                    processCommand(transcription);
-                  }
-
-                  // 如果仍处于识别状态，继续录音
-                  if (isRecognizing) {
-                    startRecording();
-                  }
-                })
-                .catch(error => {
-                  debugLog(`音频处理错误: ${error.message}`);
-                  console.error("音频处理错误:", error);
-
-                  // 尝试使用Web Speech API作为备选
-                  if (window.webSpeechBackup) {
-                    debugLog("尝试使用Web Speech API作为备选方案");
-                    try {
-                      window.webSpeechBackup.start();
-                      debugLog("已启动Web Speech API备选识别");
-                    } catch (webError) {
-                      debugLog(`Web Speech API启动失败: ${webError.message}`);
-                    }
-                  }
-                });
-            } else {
-              debugLog("无法处理音频：Electron API不可用");
+            try {
+              debugLog(`处理音频，收集到 ${audioChunks.length} 个音频块`);
+              const resultElement = document.getElementById('result');
+              let resultContent = resultElement.querySelector('.result-content');
               if (resultContent) {
-                resultContent.textContent = "无法处理音频：Electron API不可用";
+                resultContent.textContent = "正在识别...";
+              }
+
+              // 创建音频Blob
+              const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+              debugLog(`创建音频Blob，大小: ${audioBlob.size} 字节`);
+              audioChunks = []; // 清空数组以便下次录音
+
+              // 在Electron环境中处理音频 
+              if (hasElectronAPI) {
+                // 向主进程发送音频数据进行处理
+                debugLog("发送音频到主进程进行Whisper处理");
+
+                // 将Blob转换为ArrayBuffer
+                const arrayBuffer = await audioBlob.arrayBuffer();
+                const uint8Array = new Uint8Array(arrayBuffer);
+                debugLog(`转换为Uint8Array，大小: ${uint8Array.length} 字节`);
+
+                // 使用临时文件保存音频
+                const tempFileName = `temp_audio_${Date.now()}.wav`;
+
+                // 通过Electron IPC调用nodejs-whisper处理
+                // 这需要在preload.js和main.js中添加相应的API
+                window.api.processWhisperAudio(uint8Array, tempFileName)
+                  .then(transcription => {
+                    debugLog(`Whisper识别结果: "${transcription}"`);
+
+                    // 更新UI
+                    if (resultContent) {
+                      resultContent.textContent = transcription || '(未检测到语音)';
+                    }
+
+                    // 识别到内容后处理命令
+                    if (transcription && transcription !== '未识别到内容') {
+                      // 日志输出识别文本
+                      recognitionLog(transcription);
+
+                      // 这里检查transcription的格式并适当处理
+                      let finalText = transcription;
+
+                      // 处理数组格式的结果
+                      if (transcription.startsWith('[') && transcription.endsWith(']')) {
+                        try {
+                          // 尝试解析JSON
+                          const resultArray = JSON.parse(transcription);
+                          if (Array.isArray(resultArray) && resultArray.length > 0) {
+                            if (Array.isArray(resultArray[0]) && resultArray[0].length > 2) {
+                              // 处理 [["时间戳1", "时间戳2", "文本"]] 格式
+                              finalText = resultArray[0][2].trim();
+                            } else if (typeof resultArray[0] === 'string') {
+                              // 处理 ["文本"] 格式
+                              finalText = resultArray[0].trim();
+                            }
+                          }
+                          debugLog(`解析结果数组: ${finalText}`);
+                        } catch (e) {
+                          debugLog(`JSON解析失败: ${e.message}`);
+                        }
+                      }
+
+                      // 更新UI显示最终文本
+                      if (resultContent) {
+                        resultContent.textContent = finalText;
+                      }
+
+                      processCommand(finalText);
+                    } else {
+                      debugLog("没有识别到有效文本，跳过命令处理");
+                    }
+
+                    // 如果仍处于识别状态，继续录音
+                    if (isRecognizing) {
+                      debugLog("识别仍在进行，开始下一段录音");
+                      setTimeout(() => {
+                        startRecording();
+                      }, 500); // 增加短暂延迟让系统缓一下
+                    }
+                  })
+                  .catch(error => {
+                    debugLog(`音频处理错误: ${error.message}`);
+                    console.error("音频处理错误:", error);
+
+                    // 更新UI显示错误
+                    if (resultContent) {
+                      resultContent.textContent = `识别错误: ${error.message}`;
+                    }
+
+                    // 即使出错，如果仍在识别状态，也继续录音
+                    if (isRecognizing) {
+                      debugLog("出错后重试录音");
+                      setTimeout(() => {
+                        startRecording();
+                      }, 1000);
+                    }
+
+                    // 尝试使用Web Speech API作为备选
+                    if (window.webSpeechBackup) {
+                      debugLog("尝试使用Web Speech API作为备选方案");
+                      try {
+                        window.webSpeechBackup.start();
+                        debugLog("已启动Web Speech API备选识别");
+                      } catch (webError) {
+                        debugLog(`Web Speech API启动失败: ${webError.message}`);
+                      }
+                    }
+                  });
+              } else {
+                debugLog("无法处理音频：Electron API不可用");
+                if (resultContent) {
+                  resultContent.textContent = "无法处理音频：Electron API不可用";
+                }
+
+                // 即使出错，如果仍处于识别状态，也继续录音
+                if (isRecognizing) {
+                  debugLog("API不可用，重试录音");
+                  setTimeout(() => {
+                    startRecording();
+                  }, 1000);
+                }
+              }
+            } catch (error) {
+              debugLog(`音频处理错误: ${error.message}`);
+              console.error("音频处理错误:", error);
+
+              // 出错后继续录音
+              if (isRecognizing) {
+                debugLog("处理错误后重试录音");
+                setTimeout(() => {
+                  startRecording();
+                }, 1000);
               }
             }
-          } catch (error) {
-            debugLog(`音频处理错误: ${error.message}`);
-            console.error("音频处理错误:", error);
-          }
-        };
+          };
 
-        return true;
+          return true; // 初始化成功
+        } catch (micError) {
+          debugLog(`获取麦克风权限失败: ${micError.message}`);
+          return false; // 麦克风初始化失败
+        }
       } catch (error) {
         debugLog(`音频捕获初始化失败: ${error.message}`);
         console.error("音频捕获初始化错误:", error);
         return false;
       }
     }
+
+    // 页面加载时尝试初始化麦克风
+    window.onload = async function () {
+      debugLog("页面加载完成，尝试初始化麦克风");
+
+      // 检查是否支持AudioContext
+      if (typeof window.AudioContext !== 'undefined' || typeof window.webkitAudioContext !== 'undefined') {
+        debugLog("浏览器支持AudioContext");
+      } else {
+        debugLog("警告: 浏览器不支持AudioContext，语音识别可能无法工作");
+      }
+
+      // 尝试提前初始化麦克风，这样用户点击Start按钮时就可以立即开始录音
+      try {
+        await initAudioCapture();
+        debugLog("麦克风初始化完成");
+      } catch (error) {
+        debugLog(`麦克风初始化失败: ${error.message}`);
+      }
+    };
 
     // 开始录音
     function startRecording() {
@@ -500,9 +621,9 @@ document.getElementById('exportOptionsSubmit').onclick = () => {
       }
 
       try {
+        debugLog("开始录音...");
         audioChunks = [];
         audioRecorder.start();
-        debugLog("开始录音...");
 
         // 设置一个超时，5秒停止一次录音并进行处理
         setTimeout(() => {
@@ -643,7 +764,12 @@ document.getElementById('exportOptionsSubmit').onclick = () => {
 
         // 设置识别状态并开始录音
         isRecognizing = true;
+
+        // 立即开始录音
         startRecording();
+
+        // 添加调试信息
+        debugLog("语音识别已启动，正在录音...");
 
       } catch (error) {
         debugLog(`启动语音识别失败: ${error.message}`);
