@@ -32,15 +32,16 @@
   },
   "homepage": "https://github.com/Mirage415/Tracerouter#readme",
   "devDependencies": {
-    "electron": "^36.2.0"
+    "electron": "^36.1.0",
+    "electron-builder": "^24.9.1"
   },
   "dependencies": {
-    "@napi-rs/whisper": "^0.0.4",
     "ffmpeg-static": "^5.2.0",
     "node-fetch": "^3.3.2",
     "nodejs-whisper": "^0.2.6",
     "openai": "^4.95.1",
-    "whisper-node": "^1.1.1"
+    "whisper-node": "^1.1.1",
+    "whisper-node-addon": "latest"
   },
   "build": {
     "appId": "com.tracerouter.app",
@@ -108,9 +109,7 @@
       "createStartMenuShortcut": true
     },
     "mac": {
-      "target": [
-        "zip"
-      ],
+      "target": ["zip"],
       "icon": "build/icon.icns",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
