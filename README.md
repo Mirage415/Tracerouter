@@ -1,5 +1,11 @@
 # Tracerouter 
 
+
+
+https://github.com/Mirage415/Tracerouter
+
+
+
 An Electron-based, multi-protocol traceroute visualization application with an interactive globe display for network path tracking.
 
 ---
@@ -67,9 +73,6 @@ npm install
 
 # Run development version
 sudo npm start
-
-# Build the application
-sudo npm run build
 ```
 
 ---
@@ -157,7 +160,7 @@ Drag the application from the Applications folder to the Trash, or use a third-p
 
 ## Technical Support
 
-If you encounter any issues, please submit an issue through the GitHub repository or send an email to support@example.com.
+If you encounter any issues, please submit an issue through the GitHub repository or send an email to wh2538@nyu.edu.
 =======
 ### Clone repository
 Clone the Tracerouter repository to your local machine using the following command:
@@ -186,12 +189,6 @@ Start the Tracerouter application using the following command:
 sudo npm start
 ```
 Note: Using sudo is required to ensure the application has the necessary permissions to run.
-
-
-
-
-
-
 
 
 
