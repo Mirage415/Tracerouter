@@ -1,0 +1,15 @@
+{
+  "package_size": 64,
+  "series_count": 1,
+  "probe_sequence": [
+    "udp",
+    "tcp",
+    "icmp"
+  ],
+  "queries": 1,
+  "series_interval": 100,
+  "z": 0,
+  "max_hops": 30,
+  "wait": 5000,
+  "no_resolve": false
+}
