@@ -109,7 +109,7 @@
       "createStartMenuShortcut": true
     },
     "mac": {
-      "target": "dmg",
+      "target": ["zip"],
       "icon": "build/icon.icns",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,

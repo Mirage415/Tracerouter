@@ -182,6 +182,28 @@ npm install
 
 ### Run the Application
 Start the Tracerouter application using the following command:
+Clone the Tracerouter repository to your local machine using the following command:
+```bash
+git clone https://github.com/your-username/Tracerouter.git
+cd Tracerouter
+```
+Note: If you encounter any issues with cloning the repository, such as a failed connection, please ensure the URL is correct and your network connection is stable. You may need to retry the command.
+
+### If you have downloaded the Tracerouter
+If you have already downloaded the Tracerouter repository, navigate to the directory where it is located:
+```bash
+cd your_filepath/Tracerouter
+```
+Replace /path/to/Tracerouter with the actual path to the directory where you have downloaded the project.
+
+### install the dependencies
+racerouter requires some dependencies to run. Install them using npm:
+```bash
+npm install
+```
+
+### Run the Application
+Start the Tracerouter application using the following command:
 ```bash
 sudo npm start
 ```

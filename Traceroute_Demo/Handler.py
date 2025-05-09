@@ -223,6 +223,7 @@ class TracerouteHandler:
 def Handler_run_file(options:dict, input_file:str, output_format="json", output_dir="traceroute_results"):
     handler = TracerouteHandler(output_dir=output_dir)
     all_results = handler.batch_trace(input_file, options, output_format=output_format)
+
     print("\nBatch tracing completed. Results saved to:", handler.output_dir)
 
 def Handler_run_url(options:dict):
@@ -274,15 +275,31 @@ def main():
         "wait": 5000,  # time-out 时间(ms)
         "no_resolve": False,  # 是否解析主机名
     }
+    file_path = "Traceroute_Demo/option.json"
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            print("JSON 文件内容：")
+            print(data)
+    except FileNotFoundError:
+        print(f"options文件 {file_path} 不存在。")
+    except json.JSONDecodeError:
+        print(f"options文件 {file_path} 不是有效的 JSON 格式。")
+    except Exception as e:
+        print(f"读取options时发生错误：{e}")
 
     try:
         # 处理输入文件
 
 
         # 如果输入文件
-        input_file = read_first_line("filename.txt")
+        file_path = "filename.txt"
+        input_file = read_first_line(file_path)
         if input_file is not None:      # 如果输入的是一个文件路径
             Handler_run_file(options, input_file)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"文件 {file_path} 已删除。")
         else:                           # 如果输入的是单个网址
             Handler_run_url(options)   # 直接通过parsearg获取
         # series["tcp", "udp", "icmp", "tcp"]
