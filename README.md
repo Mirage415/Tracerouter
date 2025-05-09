@@ -82,7 +82,7 @@ npm install
 ### Run the Application
 Start the Tracerouter application using the following command:
 ```bash
-sudo npm install
+sudo npm start
 ```
 Note: Using sudo is required to ensure the application has the necessary permissions to run.
 
