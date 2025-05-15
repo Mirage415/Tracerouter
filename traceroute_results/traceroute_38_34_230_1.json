@@ -1,0 +1,14 @@
+{
+  "metadata": {
+    "series": [
+      "udp",
+      "tcp",
+      "icmp"
+    ],
+    "target": "38.34.230.1",
+    "protocol": "udp",
+    "ip_version": "4",
+    "timestamp": "2025-05-15 21:13:48",
+    "reached_target": false
+  }
+}

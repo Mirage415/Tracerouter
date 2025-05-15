@@ -72,29 +72,49 @@ def process_traceroute_json(json_file_path: str, csv_writer) -> None:
         # 只写入IP和经纬度
         csv_writer.writerow([ip, lat, lon])
 
-def read_first_line(file_path):
-    try:
-        # 使用 with 语句打开文件，确保文件在操作完成后正确关闭
-        with open(file_path, 'r', encoding='utf-8') as file:
-            first_line = file.readline().strip()
-            return first_line
-    except FileNotFoundError:
-        print(f"文件 {file_path} 未找到。")
-        return None
-    except Exception as e:
-        print(f"读取文件时发生错误: {e}")
-        return None
 
 if __name__ == '__main__':
-
-
     # 如果输入文件
-    input_file = read_first_line("filename.txt")
+    domain_list = None
 
-    if input_file is not None:      # 如果输入的是一个文件路径
-        domain_name = read_first_line(input_file)
-        formatted_domain = domain_name.replace('.', '_')
+    with open("filename.txt", 'r', encoding='utf-8') as file:
+        filepath = file.readline().strip() # file given by Spathis
+        print(filepath)
 
+    file = open(filepath, 'r', encoding='utf-8')
+    domain_list = [ l.strip() for l in file.readlines() ]
+    file.close()
+
+    if domain_list is not None:      # 如果输入的是一个文件路径, 即包含所有目标ip的文件。则输出每一个ip对应的traceroute结果文件
+        for domain_name in domain_list:
+            formatted_domain = domain_name.replace('.', '_').strip()
+            
+                # JSON文件路径
+            json_file_name = f"traceroute_{formatted_domain}.json"
+            json_file_path = os.path.join("Traceroute_Demo", "traceroute_results", json_file_name)
+            print(json_file_path)
+            
+            # 输出CSV路径
+            output_csv_path = os.path.join("renderer", f"output_{formatted_domain}.csv")
+
+            try:
+                # 确保renderer目录存在
+                renderer_dir = os.path.dirname(output_csv_path)
+                if renderer_dir and not os.path.exists(renderer_dir):
+                    os.makedirs(renderer_dir)
+                    print(f"创建目录: {renderer_dir}")
+
+                # 写入CSV (使用w模式覆盖文件)
+                with open(output_csv_path, "w", newline="", encoding='utf-8') as csvfile:
+                    writer = csv.writer(csvfile)
+                    # 只包含三列：ip,latitude,longitude
+                    writer.writerow(["ip", "latitude", "longitude"])
+                    process_traceroute_json(json_file_path, writer)
+                
+
+            except Exception as e:
+                print(f"处理过程中出错: {e}")
+                exit(1)  # 错误退出
 
     else:                           # 如果输入的是单个网址
         parser = argparse.ArgumentParser(description="从traceroute JSON提取IP并查询地理位置")
@@ -103,31 +123,30 @@ if __name__ == '__main__':
         # 处理域名：将点替换为下划线，以符合文件命名格式
         formatted_domain = args.domain_name.replace('.', '_')
 
-
-
-    # JSON文件路径
-    json_file_name = f"traceroute_{formatted_domain}.json"
-    json_file_path = os.path.join("Traceroute_Demo", "traceroute_results", json_file_name)
-    
-    # 输出CSV路径
-    output_csv_path = os.path.join("renderer", "output.csv")
-
-    try:
-        # 确保renderer目录存在
-        renderer_dir = os.path.dirname(output_csv_path)
-        if renderer_dir and not os.path.exists(renderer_dir):
-            os.makedirs(renderer_dir)
-            print(f"创建目录: {renderer_dir}")
-
-        # 写入CSV (使用w模式覆盖文件)
-        with open(output_csv_path, "w", newline="", encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile)
-            # 只包含三列：ip,latitude,longitude
-            writer.writerow(["ip", "latitude", "longitude"])
-            process_traceroute_json(json_file_path, writer)
+        # JSON文件路径
+        json_file_name = f"traceroute_{formatted_domain}.json"
+        json_file_path = os.path.join("Traceroute_Demo", "traceroute_results", json_file_name)
         
-        print(f"地理位置数据已写入: {output_csv_path}")
-        exit(0)  # 成功退出
-    except Exception as e:
-        print(f"处理过程中出错: {e}")
-        exit(1)  # 错误退出
+        # 输出CSV路径
+        output_csv_path = os.path.join("renderer", "output.csv")
+
+        try:
+            # 确保renderer目录存在
+            renderer_dir = os.path.dirname(output_csv_path)
+            if renderer_dir and not os.path.exists(renderer_dir):
+                os.makedirs(renderer_dir)
+                print(f"创建目录: {renderer_dir}")
+
+            # 写入CSV (使用w模式覆盖文件)
+            with open(output_csv_path, "w", newline="", encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile)
+                # 只包含三列：ip,latitude,longitude
+                writer.writerow(["ip", "latitude", "longitude"])
+                process_traceroute_json(json_file_path, writer)
+            
+            print(f"地理位置数据已写入: {output_csv_path}")
+            exit(0)  # 成功退出
+        except Exception as e:
+            print(f"处理过程中出错: {e}")
+            exit(1)  # 错误退出
+    exit(0)  # 成功退出

@@ -1,0 +1,109 @@
+{
+  "1": {
+    "udp": {
+      "probes": [
+        {
+          "rtt": 3398.4949588775635,
+          "from": "10.209.64.1",
+          "reached": false
+        }
+      ],
+      "stats": {
+        "count": 1,
+        "responses": 1,
+        "loss": 0.0,
+        "min": 3398.4949588775635,
+        "max": 3398.4949588775635,
+        "avg": 3398.4949588775635
+      }
+    },
+    "tcp": {
+      "probes": [
+        {
+          "rtt": 3946.500778198242,
+          "from": "10.209.64.1",
+          "reached": false
+        }
+      ],
+      "stats": {
+        "count": 1,
+        "responses": 1,
+        "loss": 0.0,
+        "min": 3946.500778198242,
+        "max": 3946.500778198242,
+        "avg": 3946.500778198242
+      }
+    },
+    "icmp": {
+      "probes": [
+        {
+          "rtt": 12014.940023422241,
+          "from": "10.213.33.25",
+          "reached": false
+        }
+      ],
+      "stats": {
+        "count": 1,
+        "responses": 1,
+        "loss": 0.0,
+        "min": 12014.940023422241,
+        "max": 12014.940023422241,
+        "avg": 12014.940023422241
+      }
+    },
+    "extensions": {}
+  },
+  "2": {
+    "udp": {
+      "probes": [
+        {
+          "rtt": 11916.894912719727,
+          "from": "10.213.33.25",
+          "reached": false
+        }
+      ],
+      "stats": {
+        "count": 1,
+        "responses": 1,
+        "loss": 0.0,
+        "min": 11916.894912719727,
+        "max": 11916.894912719727,
+        "avg": 11916.894912719727
+      }
+    },
+    "tcp": {
+      "probes": [
+        {
+          "rtt": 15529.534101486206,
+          "from": "10.213.32.41",
+          "reached": false
+        }
+      ],
+      "stats": {
+        "count": 1,
+        "responses": 1,
+        "loss": 0.0,
+        "min": 15529.534101486206,
+        "max": 15529.534101486206,
+        "avg": 15529.534101486206
+      }
+    },
+    "icmp": {
+      "probes": [],
+      "stats": {}
+    },
+    "extensions": {}
+  },
+  "metadata": {
+    "series": [
+      "udp",
+      "tcp",
+      "icmp"
+    ],
+    "target": "58.5.207.1",
+    "protocol": "udp",
+    "ip_version": "4",
+    "timestamp": "2025-05-15 21:10:13",
+    "reached_target": false
+  }
+}

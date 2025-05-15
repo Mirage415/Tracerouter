@@ -1,0 +1,97 @@
+Traceroute results for 186.90.153.1
+==================================================
+
+Target: 186.90.153.1
+Series: ['udp', 'tcp', 'icmp']
+IP Version: 4
+Timestamp: 2025-05-15 15:21:26
+Reached Target: No
+
+Hop 1:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 6.05 ms
+      Avg RTT: 6.05 ms
+      Max RTT: 6.05 ms
+    Probe details:
+      Probe 1: RTT: 6.05 ms from 10.209.64.1 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 5.69 ms
+      Avg RTT: 5.69 ms
+      Max RTT: 5.69 ms
+    Probe details:
+      Probe 1: RTT: 5.69 ms from 10.209.64.1 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 247.36 ms
+      Avg RTT: 247.36 ms
+      Max RTT: 247.36 ms
+    Probe details:
+      Probe 1: RTT: 247.36 ms from 10.213.32.41 
+
+Hop 2:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 143.57 ms
+      Avg RTT: 143.57 ms
+      Max RTT: 143.57 ms
+    Probe details:
+      Probe 1: RTT: 143.57 ms from 10.213.32.41 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 173.35 ms
+      Avg RTT: 173.35 ms
+      Max RTT: 173.35 ms
+    Probe details:
+      Probe 1: RTT: 173.35 ms from 10.213.33.33 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 213.08 ms
+      Avg RTT: 213.08 ms
+      Max RTT: 213.08 ms
+    Probe details:
+      Probe 1: RTT: 213.08 ms from 10.213.32.22 
+
+Hop 3:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 108.57 ms
+      Avg RTT: 108.57 ms
+      Max RTT: 108.57 ms
+    Probe details:
+      Probe 1: RTT: 108.57 ms from 10.213.32.22 
+  TCP:
+    Statistics:
+      Probes sent: 0
+      Responses: 0
+      Loss: 0.0%
+    Probe details:
+  ICMP:
+    Statistics:
+      Probes sent: 0
+      Responses: 0
+      Loss: 0.0%
+    Probe details:
+

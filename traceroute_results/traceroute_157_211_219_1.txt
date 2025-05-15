@@ -1,0 +1,97 @@
+Traceroute results for 157.211.219.1
+==================================================
+
+Target: 157.211.219.1
+Series: ['udp', 'tcp', 'icmp']
+IP Version: 4
+Timestamp: 2025-05-15 15:21:42
+Reached Target: No
+
+Hop 1:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 210.57 ms
+      Avg RTT: 210.57 ms
+      Max RTT: 210.57 ms
+    Probe details:
+      Probe 1: RTT: 210.57 ms from 10.209.64.1 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 210.57 ms
+      Avg RTT: 210.57 ms
+      Max RTT: 210.57 ms
+    Probe details:
+      Probe 1: RTT: 210.57 ms from 10.209.64.1 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 236.27 ms
+      Avg RTT: 236.27 ms
+      Max RTT: 236.27 ms
+    Probe details:
+      Probe 1: RTT: 236.27 ms from 10.213.33.33 
+
+Hop 2:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 157.15 ms
+      Avg RTT: 157.15 ms
+      Max RTT: 157.15 ms
+    Probe details:
+      Probe 1: RTT: 157.15 ms from 10.213.32.41 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 159.17 ms
+      Avg RTT: 159.17 ms
+      Max RTT: 159.17 ms
+    Probe details:
+      Probe 1: RTT: 159.17 ms from 10.213.32.41 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 246.36 ms
+      Avg RTT: 246.36 ms
+      Max RTT: 246.36 ms
+    Probe details:
+      Probe 1: RTT: 246.36 ms from 10.213.32.22 
+
+Hop 3:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 146.76 ms
+      Avg RTT: 146.76 ms
+      Max RTT: 146.76 ms
+    Probe details:
+      Probe 1: RTT: 146.76 ms from 10.213.32.22 
+  TCP:
+    Statistics:
+      Probes sent: 0
+      Responses: 0
+      Loss: 0.0%
+    Probe details:
+  ICMP:
+    Statistics:
+      Probes sent: 0
+      Responses: 0
+      Loss: 0.0%
+    Probe details:
+

@@ -141,6 +141,19 @@ app.on('activate', () => {
 });
 
 ipcMain.on('run-traceroute', (event, fullCommand) => {
+  const globeWindow = new BrowserWindow({
+    width: 1200,
+    height: 900,
+    title: `Cesium地球 - 的路由追踪`,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    }
+  });
+
+  globeWindow.loadFile(getResourcePath('globe_cesium.html'));
+  globeWindow.webContents.openDevTools();
+
   const parts = fullCommand.split(' ');
   const command = parts[0].toLowerCase();
   const targetDomain = parts.length > 1 ? parts.slice(1).join(' ') : '';

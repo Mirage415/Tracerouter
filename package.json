@@ -8,7 +8,7 @@
     "admin-start": "powershell -Command \"Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \\\"cd \\\\\\\"%CD%\\\\\\\"; npx electron .\\\"' -Verb RunAs\"",
     "admin-start-mac": "sudo npx electron .",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "electron-builder --win",
+    "build": "electron-builder --mac",
     "build-all": "electron-builder -mwl",
     "build-win": "electron-builder --win",
     "build-mac": "electron-builder --mac",

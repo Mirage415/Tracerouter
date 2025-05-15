@@ -1,0 +1,73 @@
+Traceroute results for 146.85.95.1
+==================================================
+
+Target: 146.85.95.1
+Series: ['udp', 'tcp', 'icmp']
+IP Version: 4
+Timestamp: 2025-05-15 15:21:26
+Reached Target: No
+
+Hop 1:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 5.78 ms
+      Avg RTT: 5.78 ms
+      Max RTT: 5.78 ms
+    Probe details:
+      Probe 1: RTT: 5.78 ms from 10.209.64.1 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 6.05 ms
+      Avg RTT: 6.05 ms
+      Max RTT: 6.05 ms
+    Probe details:
+      Probe 1: RTT: 6.05 ms from 10.209.64.1 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 110.55 ms
+      Avg RTT: 110.55 ms
+      Max RTT: 110.55 ms
+    Probe details:
+      Probe 1: RTT: 110.55 ms from 10.213.33.25 
+
+Hop 2:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 7.06 ms
+      Avg RTT: 7.06 ms
+      Max RTT: 7.06 ms
+    Probe details:
+      Probe 1: RTT: 7.06 ms from 10.213.33.25 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 181.57 ms
+      Avg RTT: 181.57 ms
+      Max RTT: 181.57 ms
+    Probe details:
+      Probe 1: RTT: 181.57 ms from 10.213.32.41 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 182.20 ms
+      Avg RTT: 182.20 ms
+      Max RTT: 182.20 ms
+    Probe details:
+      Probe 1: RTT: 182.20 ms from 10.213.32.41 
+

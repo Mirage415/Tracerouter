@@ -1,0 +1,73 @@
+Traceroute results for 31.40.174.1
+==================================================
+
+Target: 31.40.174.1
+Series: ['udp', 'tcp', 'icmp']
+IP Version: 4
+Timestamp: 2025-05-15 15:19:26
+Reached Target: No
+
+Hop 1:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 19.37 ms
+      Avg RTT: 19.37 ms
+      Max RTT: 19.37 ms
+    Probe details:
+      Probe 1: RTT: 19.37 ms from 10.209.64.1 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 19.05 ms
+      Avg RTT: 19.05 ms
+      Max RTT: 19.05 ms
+    Probe details:
+      Probe 1: RTT: 19.05 ms from 10.209.64.1 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 114.06 ms
+      Avg RTT: 114.06 ms
+      Max RTT: 114.06 ms
+    Probe details:
+      Probe 1: RTT: 114.06 ms from 10.213.33.25 
+
+Hop 2:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 9.53 ms
+      Avg RTT: 9.53 ms
+      Max RTT: 9.53 ms
+    Probe details:
+      Probe 1: RTT: 9.53 ms from 10.213.33.25 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 113.41 ms
+      Avg RTT: 113.41 ms
+      Max RTT: 113.41 ms
+    Probe details:
+      Probe 1: RTT: 113.41 ms from 10.213.32.41 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 115.72 ms
+      Avg RTT: 115.72 ms
+      Max RTT: 115.72 ms
+    Probe details:
+      Probe 1: RTT: 115.72 ms from 10.213.32.41 
+

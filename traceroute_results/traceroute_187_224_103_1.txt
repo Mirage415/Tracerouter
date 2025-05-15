@@ -1,0 +1,193 @@
+Traceroute results for 187.224.103.1
+==================================================
+
+Target: 187.224.103.1
+Series: ['udp', 'tcp', 'icmp']
+IP Version: 4
+Timestamp: 2025-05-15 15:19:55
+Reached Target: No
+
+Hop 1:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 30.56 ms
+      Avg RTT: 30.56 ms
+      Max RTT: 30.56 ms
+    Probe details:
+      Probe 1: RTT: 30.56 ms from 10.209.64.1 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 30.91 ms
+      Avg RTT: 30.91 ms
+      Max RTT: 30.91 ms
+    Probe details:
+      Probe 1: RTT: 30.91 ms from 10.209.64.1 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 413.14 ms
+      Avg RTT: 413.14 ms
+      Max RTT: 413.14 ms
+    Probe details:
+      Probe 1: RTT: 413.14 ms from 10.213.32.22 
+
+Hop 2:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 316.09 ms
+      Avg RTT: 316.09 ms
+      Max RTT: 316.09 ms
+    Probe details:
+      Probe 1: RTT: 316.09 ms from 10.213.32.22 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 434.52 ms
+      Avg RTT: 434.52 ms
+      Max RTT: 434.52 ms
+    Probe details:
+      Probe 1: RTT: 434.52 ms from 203.85.128.94 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 434.93 ms
+      Avg RTT: 434.93 ms
+      Max RTT: 434.93 ms
+    Probe details:
+      Probe 1: RTT: 434.93 ms from 203.85.128.94 
+
+Hop 3:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 365.61 ms
+      Avg RTT: 365.61 ms
+      Max RTT: 365.61 ms
+    Probe details:
+      Probe 1: RTT: 365.61 ms from 202.76.18.72 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 367.65 ms
+      Avg RTT: 367.65 ms
+      Max RTT: 367.65 ms
+    Probe details:
+      Probe 1: RTT: 367.65 ms from 202.76.18.72 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 454.07 ms
+      Avg RTT: 454.07 ms
+      Max RTT: 454.07 ms
+    Probe details:
+      Probe 1: RTT: 454.07 ms from 202.76.18.64 
+
+Hop 4:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 352.41 ms
+      Avg RTT: 352.41 ms
+      Max RTT: 352.41 ms
+    Probe details:
+      Probe 1: RTT: 352.41 ms from 202.76.18.64 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 471.78 ms
+      Avg RTT: 471.78 ms
+      Max RTT: 471.78 ms
+    Probe details:
+      Probe 1: RTT: 471.78 ms from 203.131.241.129 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 472.06 ms
+      Avg RTT: 472.06 ms
+      Max RTT: 472.06 ms
+    Probe details:
+      Probe 1: RTT: 472.06 ms from 203.131.241.129 
+
+Hop 5:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 1310.75 ms
+      Avg RTT: 1310.75 ms
+      Max RTT: 1310.75 ms
+    Probe details:
+      Probe 1: RTT: 1310.75 ms from 129.250.7.68 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 1310.63 ms
+      Avg RTT: 1310.63 ms
+      Max RTT: 1310.63 ms
+    Probe details:
+      Probe 1: RTT: 1310.63 ms from 129.250.7.68 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 1419.60 ms
+      Avg RTT: 1419.60 ms
+      Max RTT: 1419.60 ms
+    Probe details:
+      Probe 1: RTT: 1419.60 ms from 129.250.7.117 
+
+Hop 6:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 1315.85 ms
+      Avg RTT: 1315.85 ms
+      Max RTT: 1315.85 ms
+    Probe details:
+      Probe 1: RTT: 1315.85 ms from 129.250.7.117 
+  TCP:
+    Statistics:
+      Probes sent: 0
+      Responses: 0
+      Loss: 0.0%
+    Probe details:
+  ICMP:
+    Statistics:
+      Probes sent: 0
+      Responses: 0
+      Loss: 0.0%
+    Probe details:
+

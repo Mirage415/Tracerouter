@@ -1,0 +1,55 @@
+{
+  "1": {
+    "udp": {
+      "probes": [
+        {
+          "rtt": 12561.84697151184,
+          "from": "96.110.46.17",
+          "reached": false
+        }
+      ],
+      "stats": {
+        "count": 1,
+        "responses": 1,
+        "loss": 0.0,
+        "min": 12561.84697151184,
+        "max": 12561.84697151184,
+        "avg": 12561.84697151184
+      }
+    },
+    "tcp": {
+      "probes": [
+        {
+          "rtt": 12557.980060577393,
+          "from": "96.110.46.17",
+          "reached": false
+        }
+      ],
+      "stats": {
+        "count": 1,
+        "responses": 1,
+        "loss": 0.0,
+        "min": 12557.980060577393,
+        "max": 12557.980060577393,
+        "avg": 12557.980060577393
+      }
+    },
+    "icmp": {
+      "probes": [],
+      "stats": {}
+    },
+    "extensions": {}
+  },
+  "metadata": {
+    "series": [
+      "udp",
+      "tcp",
+      "icmp"
+    ],
+    "target": "50.237.96.1",
+    "protocol": "udp",
+    "ip_version": "4",
+    "timestamp": "2025-05-15 21:11:42",
+    "reached_target": false
+  }
+}

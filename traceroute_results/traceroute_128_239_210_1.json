@@ -1,0 +1,14 @@
+{
+  "metadata": {
+    "series": [
+      "udp",
+      "tcp",
+      "icmp"
+    ],
+    "target": "128.239.210.1",
+    "protocol": "udp",
+    "ip_version": "4",
+    "timestamp": "2025-05-15 21:15:16",
+    "reached_target": false
+  }
+}

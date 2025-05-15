@@ -1,0 +1,101 @@
+Traceroute results for 208.95.173.1
+==================================================
+
+Target: 208.95.173.1
+Series: ['udp', 'tcp', 'icmp']
+IP Version: 4
+Timestamp: 2025-05-15 15:20:57
+Reached Target: No
+
+Hop 1:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 104.28 ms
+      Avg RTT: 104.28 ms
+      Max RTT: 104.28 ms
+    Probe details:
+      Probe 1: RTT: 104.28 ms from 10.209.64.1 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 105.33 ms
+      Avg RTT: 105.33 ms
+      Max RTT: 105.33 ms
+    Probe details:
+      Probe 1: RTT: 105.33 ms from 10.209.64.1 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 112.37 ms
+      Avg RTT: 112.37 ms
+      Max RTT: 112.37 ms
+    Probe details:
+      Probe 1: RTT: 112.37 ms from 10.213.33.33 
+
+Hop 2:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 11.80 ms
+      Avg RTT: 11.80 ms
+      Max RTT: 11.80 ms
+    Probe details:
+      Probe 1: RTT: 11.80 ms from 10.213.33.33 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 199.85 ms
+      Avg RTT: 199.85 ms
+      Max RTT: 199.85 ms
+    Probe details:
+      Probe 1: RTT: 199.85 ms from 10.213.32.41 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 199.98 ms
+      Avg RTT: 199.98 ms
+      Max RTT: 199.98 ms
+    Probe details:
+      Probe 1: RTT: 199.98 ms from 10.213.32.41 
+
+Hop 3:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 115.77 ms
+      Avg RTT: 115.77 ms
+      Max RTT: 115.77 ms
+    Probe details:
+      Probe 1: RTT: 115.77 ms from 10.213.32.22 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 115.73 ms
+      Avg RTT: 115.73 ms
+      Max RTT: 115.73 ms
+    Probe details:
+      Probe 1: RTT: 115.73 ms from 10.213.32.22 
+  ICMP:
+    Statistics:
+      Probes sent: 0
+      Responses: 0
+      Loss: 0.0%
+    Probe details:
+

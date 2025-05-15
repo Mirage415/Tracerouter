@@ -2,40 +2,20 @@
 import os
 import json
 import csv
-import sys
-import argparse
-from pathlib import Path
+import random
 from typing import List, Dict, Union
-
-# 尝试多种导入策略
-try:
-    # 尝试从当前目录导入
-    from .My_traceroute_fixed import Traceroute
-except (ImportError, ModuleNotFoundError):
-    try:
-        # 尝试从绝对路径导入
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        if current_dir not in sys.path:
-            sys.path.insert(0, current_dir)
-        from My_traceroute_fixed import Traceroute
-    except (ImportError, ModuleNotFoundError):
-        # 再次尝试通过相对路径查找模块
-        try:
-            sys.path.insert(0, os.path.dirname(__file__))
-            from My_traceroute_fixed import Traceroute
-        except (ImportError, ModuleNotFoundError) as e:
-            raise ImportError(f"无法导入Traceroute模块，请确保My_traceroute_fixed.py文件在正确的位置: {e}")
+from My_traceroute_fixed import Traceroute  # 假设您的traceroute类在traceroute.py中
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict
 
 
 class TracerouteHandler:
-    def __init__(self, output_dir: str=""):
+    def __init__(self, output_dir: str = "results"):
         """
         初始化处理器
         :param output_dir: 结果输出目录
         """
-        self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-        self.output_dir = os.path.join(self.project_root, "Traceroute_Demo", "traceroute_results")
-        # self.output_dir = output_dir if output_dir else self.output_dir
+        self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
 
     def read_targets(self, input_file: str) -> List[str]:
@@ -101,7 +81,6 @@ class TracerouteHandler:
         safe_name = "".join(c if c.isalnum() else "_" for c in target)
         filename = f"traceroute_{safe_name}.{format}"
         filepath = os.path.join(self.output_dir, filename)
-        print(filepath)
 
         try:
             if format == "json":
@@ -125,7 +104,7 @@ class TracerouteHandler:
 
         metadata = results.get('metadata', {})
         file_obj.write(f"Target: {metadata.get('target', 'N/A')}\n")
-        file_obj.write(f"Protocol: {metadata.get('protocol', 'N/A')}\n")
+        file_obj.write(f"Series: {metadata.get('series', 'N/A')}\n")
         file_obj.write(f"IP Version: {metadata.get('ip_version', 'N/A')}\n")
         file_obj.write(f"Timestamp: {metadata.get('timestamp', 'N/A')}\n")
         file_obj.write(f"Reached Target: {'Yes' if metadata.get('reached_target') else 'No'}\n\n")
@@ -165,9 +144,9 @@ class TracerouteHandler:
         file_obj.write("    Probe details:\n")
         for i, probe in enumerate(proto_data.get('probes', []), 1):
             file_obj.write(f"      Probe {i}: ")
-            if probe.get('rtt') is not None:
-                file_obj.write(f"RTT: {probe.get('rtt', 0):.2f} ms from {probe.get('from', 'unknown')} ")
-                file_obj.write("(Reached)" if probe.get('reached', False) else "")
+            if probe['rtt'] is not None:
+                file_obj.write(f"RTT: {probe['rtt']:.2f} ms from {probe['from']} ")
+                file_obj.write("(Reached)" if probe['reached'] else "")
             else:
                 file_obj.write("Timeout")
             file_obj.write("\n")
@@ -180,116 +159,78 @@ class TracerouteHandler:
         if extensions.get('mpls'):
             file_obj.write("    MPLS Labels:\n")
             for mpls in extensions['mpls']:
-                file_obj.write(f"      Label={mpls.get('label')}, TC={mpls.get('tc')}, ")
-                file_obj.write(f"S={mpls.get('s')}, TTL={mpls.get('ttl')}\n")
+                file_obj.write(f"      Label={mpls['label']}, TC={mpls['tc']}, ")
+                file_obj.write(f"S={mpls['s']}, TTL={mpls['ttl']}\n")
 
         if extensions.get('other'):
             file_obj.write("    Other Extensions:\n")
             for ext in extensions['other']:
-                file_obj.write(f"      Type={ext.get('type')}, Length={ext.get('length')}\n")
+                file_obj.write(f"      Type={ext['type']}, Length={ext['length']}\n")
+
+
+
 
     def batch_trace(self, input_file: str, options: Dict, output_format: str = "json") -> Dict[str, Dict]:
-        """
-        批量处理目标文件
-        :param input_file: 输入文件路径
-        :param options: traceroute选项字典
-        :param output_format: 输出格式(json/text)
-        :return: 所有结果的字典 {target: results}
-        """
         all_results = {}
 
         try:
             targets = self.read_targets(input_file)
-            print(f"Found {len(targets)} targets to trace {targets}")
+            print(f"Found {len(targets)} targets to trace")
 
-            for i, target in enumerate(targets, 1):
-                print(f"\nProcessing target {i}/{len(targets)}: {target}")
+            max_workers = 100
 
-                try:
-                    results = self.process_target(target, options)
-                    self.save_results(target, results, output_format)
-                    all_results[target] = results
-                    print(f"Completed tracing to {target}")
-                except Exception as e:
-                    print(f"Failed to trace {target}: {str(e)}")
-                    all_results[target] = {"error": str(e)}
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                future_to_target = {
+                    executor.submit(
+                        self._process_single_target,
+                        target,
+                        options,
+                        output_format
+                    ): target
+                    for i, target in enumerate(targets)
+                }
 
+                # 按完成顺序处理结果
+                for future in as_completed(future_to_target):
+                    target = future_to_target[future]
+                    # 获取结果（内部已处理异常）
+                    _, result = future.result()
+                    all_results[target] = result
         except Exception as e:
             print(f"Batch tracing failed: {str(e)}")
             raise
-
         return all_results
 
-def Handler_run_file(options:dict, input_file:str, output_format="json", output_dir="traceroute_results"):
+    def _process_single_target(self, target: str, options: Dict, output_format: str) -> tuple:
+        try:
+            results = self.process_target(target, options)
+            self.save_results(target, results, output_format)
+            print(f"Completed tracing to {target}")
+            return (target, results)
+        except Exception as e:
+            print(f"Failed to trace {target}: {str(e)}")
+            return (target, {"error": str(e)})
+
+def Handler_run(options:dict, input_file:str, output_format="json", output_dir="traceroute_results"):
     handler = TracerouteHandler(output_dir=output_dir)
     all_results = handler.batch_trace(input_file, options, output_format=output_format)
     print("\nBatch tracing completed. Results saved to:", handler.output_dir)
 
-def Handler_run_url(options:dict):
-    parser = argparse.ArgumentParser(description="执行traceroute并生成JSON文件")
-    parser.add_argument("domain", help="要traceroute的域名或IP地址")
-    args = parser.parse_args()
-    target_domain = args.domain
-    print(f"接收到目标域名: {target_domain}")
 
-    handler = TracerouteHandler()
-    pass
-    try:
-        print(f"开始traceroute到: {target_domain}")
-        results = handler.process_target(target_domain, options)
-        handler.save_results(target_domain, results, "json")
-        print(f"Traceroute完成，结果已保存到: {handler.output_dir}")
-
-        return 0  # 成功退出码
-    except Exception as e:
-        print(f"执行traceroute时出错: {e}")
-        return 1  # 错误退出码
-
-def read_first_line(file_path):
-    try:
-        # 使用 with 语句打开文件，确保文件在操作完成后正确关闭
-        with open(file_path, 'r', encoding='utf-8') as file:
-            first_line = file.readline().strip()
-            return first_line
-    except FileNotFoundError:
-        print(f"文件 {file_path} 未找到。")
-        return None
-    except Exception as e:
-        print(f"读取文件时发生错误: {e}")
-        return None
-
-
-
-
-def main():
+# 使用示例
+if __name__ == "__main__":
     # 示例选项 (对应traceroute命令行参数)
     options = {
-        "package_size" : 64, # 探针的payload字节数(用)
-        "series_count": 1 , # 每个hop发送多少个series
-        "probe_sequence":["udp", "tcp", "icmp"], # series的协议组成及顺序
-        "queries": 1,  # 一个series中每个协议发送多少个probes
-        "series_interval": 100,  # 每个series之间的时间间隔(ms)
-        "z" : 0,   # 每个probes之间的时间间隔（ms）
+        "probe_sequence":["udp", "tcp", "icmp"],
         "max_hops": 30,  # 最大跳数
-        "wait": 5000,  # time-out 时间(ms)
-        "no_resolve": False,  # 是否解析主机名
+        "wait": 2000,  # 等待时间(ms)
+        "no_resolve": True,  # 解析主机名
+        "extensions": False  # 记录扩展信息
     }
+    # 处理输入文件
+    dir = '/Users/mac/Documents/GitHub/Tracerouter/targets-2.txt'
+    input_file = dir # 或 targets.csv
+    Handler_run(options, input_file, output_format="json")
 
-    try:
-        # 处理输入文件
 
 
-        # 如果输入文件
-        input_file = read_first_line("filename.txt")
-        if input_file is not None:      # 如果输入的是一个文件路径
-            Handler_run_file(options, input_file)
-        else:                           # 如果输入的是单个网址
-            Handler_run_url(options)   # 直接通过parsearg获取
-        # series["tcp", "udp", "icmp", "tcp"]
-        return 0  # 成功退出码
-    except Exception as e:
-        print(f"执行traceroute时出错: {e}")
-        return 1  # 错误退出码
-
-if __name__ == "__main__":
-    sys.exit(main())

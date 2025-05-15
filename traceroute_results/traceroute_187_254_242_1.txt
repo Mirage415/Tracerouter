@@ -1,0 +1,73 @@
+Traceroute results for 187.254.242.1
+==================================================
+
+Target: 187.254.242.1
+Series: ['udp', 'tcp', 'icmp']
+IP Version: 4
+Timestamp: 2025-05-15 15:20:25
+Reached Target: No
+
+Hop 1:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 166.43 ms
+      Avg RTT: 166.43 ms
+      Max RTT: 166.43 ms
+    Probe details:
+      Probe 1: RTT: 166.43 ms from 10.209.64.1 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 167.20 ms
+      Avg RTT: 167.20 ms
+      Max RTT: 167.20 ms
+    Probe details:
+      Probe 1: RTT: 167.20 ms from 10.209.64.1 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 172.41 ms
+      Avg RTT: 172.41 ms
+      Max RTT: 172.41 ms
+    Probe details:
+      Probe 1: RTT: 172.41 ms from 10.213.33.25 
+
+Hop 2:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 68.28 ms
+      Avg RTT: 68.28 ms
+      Max RTT: 68.28 ms
+    Probe details:
+      Probe 1: RTT: 68.28 ms from 10.213.33.25 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 109.13 ms
+      Avg RTT: 109.13 ms
+      Max RTT: 109.13 ms
+    Probe details:
+      Probe 1: RTT: 109.13 ms from 10.213.32.41 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 109.13 ms
+      Avg RTT: 109.13 ms
+      Max RTT: 109.13 ms
+    Probe details:
+      Probe 1: RTT: 109.13 ms from 10.213.32.41 
+

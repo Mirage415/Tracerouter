@@ -1,0 +1,201 @@
+Traceroute results for 216.228.7.1
+==================================================
+
+Target: 216.228.7.1
+Series: ['udp', 'tcp', 'icmp']
+IP Version: 4
+Timestamp: 2025-05-15 15:19:10
+Reached Target: No
+
+Hop 1:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 218.44 ms
+      Avg RTT: 218.44 ms
+      Max RTT: 218.44 ms
+    Probe details:
+      Probe 1: RTT: 218.44 ms from 10.213.32.41 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 218.60 ms
+      Avg RTT: 218.60 ms
+      Max RTT: 218.60 ms
+    Probe details:
+      Probe 1: RTT: 218.60 ms from 10.213.32.41 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 324.76 ms
+      Avg RTT: 324.76 ms
+      Max RTT: 324.76 ms
+    Probe details:
+      Probe 1: RTT: 324.76 ms from 10.213.32.22 
+
+Hop 2:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 222.80 ms
+      Avg RTT: 222.80 ms
+      Max RTT: 222.80 ms
+    Probe details:
+      Probe 1: RTT: 222.80 ms from 10.213.32.22 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 358.97 ms
+      Avg RTT: 358.97 ms
+      Max RTT: 358.97 ms
+    Probe details:
+      Probe 1: RTT: 358.97 ms from 203.85.128.94 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 359.36 ms
+      Avg RTT: 359.36 ms
+      Max RTT: 359.36 ms
+    Probe details:
+      Probe 1: RTT: 359.36 ms from 203.85.128.94 
+
+Hop 3:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 496.94 ms
+      Avg RTT: 496.94 ms
+      Max RTT: 496.94 ms
+    Probe details:
+      Probe 1: RTT: 496.94 ms from 202.76.18.72 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 567.45 ms
+      Avg RTT: 567.45 ms
+      Max RTT: 567.45 ms
+    Probe details:
+      Probe 1: RTT: 567.45 ms from 202.76.18.60 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 567.70 ms
+      Avg RTT: 567.70 ms
+      Max RTT: 567.70 ms
+    Probe details:
+      Probe 1: RTT: 567.70 ms from 202.76.18.60 
+
+Hop 4:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 807.71 ms
+      Avg RTT: 807.71 ms
+      Max RTT: 807.71 ms
+    Probe details:
+      Probe 1: RTT: 807.71 ms from 184.105.81.143 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 807.91 ms
+      Avg RTT: 807.91 ms
+      Max RTT: 807.91 ms
+    Probe details:
+      Probe 1: RTT: 807.91 ms from 184.105.81.143 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 1004.91 ms
+      Avg RTT: 1004.91 ms
+      Max RTT: 1004.91 ms
+    Probe details:
+      Probe 1: RTT: 1004.91 ms from 184.104.199.245 
+
+Hop 5:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 1051.29 ms
+      Avg RTT: 1051.29 ms
+      Max RTT: 1051.29 ms
+    Probe details:
+      Probe 1: RTT: 1051.29 ms from 184.105.55.98 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 1051.29 ms
+      Avg RTT: 1051.29 ms
+      Max RTT: 1051.29 ms
+    Probe details:
+      Probe 1: RTT: 1051.29 ms from 184.105.55.98 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 1086.72 ms
+      Avg RTT: 1086.72 ms
+      Max RTT: 1086.72 ms
+    Probe details:
+      Probe 1: RTT: 1086.72 ms from 10.173.0.11 
+
+Hop 6:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 983.59 ms
+      Avg RTT: 983.59 ms
+      Max RTT: 983.59 ms
+    Probe details:
+      Probe 1: RTT: 983.59 ms from 10.173.0.11 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 1346.92 ms
+      Avg RTT: 1346.92 ms
+      Max RTT: 1346.92 ms
+    Probe details:
+      Probe 1: RTT: 1346.92 ms from 10.100.3.146 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 1767.04 ms
+      Avg RTT: 1767.04 ms
+      Max RTT: 1767.04 ms
+    Probe details:
+      Probe 1: RTT: 1767.04 ms from 10.100.3.146 
+

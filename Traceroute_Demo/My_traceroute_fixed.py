@@ -1,6 +1,6 @@
-
 import argparse
 import socket
+import threading
 import time
 import struct
 import select
@@ -9,7 +9,6 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 from typing import Optional, List
 import random
-import os
 import platform
 
 
@@ -17,6 +16,7 @@ class Traceroute:
     def __init__(self):
 
         # Initialize state variables
+        self.reached = False
         self.results = {}
         self.probes_sent = {}
         self.recv_running = False
@@ -214,7 +214,7 @@ class Traceroute:
             self.recv_sock = self._create_recv_socket()
             self._config_socket_options()
         except Exception as e:
-            self._print_warning(f"Failed to initialize sockets: {str(e)}")
+            # self._print_warning(f"Failed to initialize sockets: {str(e)}")
             sys.exit(1)
 
     def _create_send_socket(self) -> socket.socket:
@@ -231,22 +231,23 @@ class Traceroute:
             raise ValueError(f"Unsupported protocol: {self.protocol}")
 
         family = socket.AF_INET6 if self.ip_protocol == '6' else socket.AF_INET
+        while True:
+            try:
+                sock = socket.socket(family, trans_protocol, ip_proto)
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        try:
-            sock = socket.socket(family, trans_protocol, ip_proto)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-            # Bind to source IP if specified
-            if self.src_ip:
-                sock.bind((self.src_ip, self.src_port))
-
-            return sock
-        except PermissionError as e:
-            self._print_warning(f"Permission denied: {e}. Try running as root.")
-            sys.exit(1)
-        except Exception as e:
-            self._print_warning(f"Failed to create send socket: {e}")
-            sys.exit(1)
+                # Bind to source IP if specified
+                if self.src_ip:
+                    sock.bind((self.src_ip, self.src_port))
+                return sock
+            except PermissionError as e:
+                self._print_warning(f"Permission denied: {e}. Try running as root.")
+                sys.exit(1)
+            except socket.error as e:
+                self.src_port = random.randint(32768, 61000)
+            except Exception as e:
+                self._print_warning(f"Failed to create send socket: {e}")
+                sys.exit(1)
 
     def _create_recv_socket(self) -> socket.socket:
         try:
@@ -347,7 +348,6 @@ class Traceroute:
                 sys.exit(1)
 
     def _resolve_hostname(self, host: str) -> str:
-        print(host)
         try:
             family = socket.AF_INET6 if self.ip_protocol == '6' else socket.AF_INET
             addrinfo = socket.getaddrinfo(host, None, family)
@@ -365,11 +365,9 @@ class Traceroute:
 
     def run(self):
         self.init()
-        print(f"Traceroute to {self.options.host} ({self.dest_ip}), "
-              f"max hops {self.max_hops}, {self.queries_per_hop} probes per hop")
 
         try:
-            with ThreadPoolExecutor(max_workers=2) as executor:
+            with ThreadPoolExecutor(max_workers=1) as executor:
                 # Start receiver thread first
                 recv_future = executor.submit(self._receiver_thread)
 
@@ -383,7 +381,6 @@ class Traceroute:
 
                 try:
                     # Send probes for each TTL
-
                     for ttl in range(self.first_ttl, self.first_ttl + self.max_hops):
                         self._probe_hop(ttl)
 
@@ -414,46 +411,86 @@ class Traceroute:
             time.sleep(self.series_interval)
 
         # Display results for this hop
-        self._display_current_hop(ttl)
+        # self._display_current_hop(ttl)
 
     def _send_probe(self, ttl: int, series: int, proto: str, seq: int) -> bool:
-        if self.flag_simulate:
-            return True
-
-        probe_id = f"{ttl}-{series}-{proto}-{seq}"
-        send_time = time.time()
-
-        # Set TTL
-        if self.ip_protocol == '4':
-            self.sock.setsockopt(socket.SOL_IP, socket.IP_TTL, ttl)
-        else:
-            self.sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_UNICAST_HOPS, ttl)
-
-        # Send based on protocol
-        try:
-            if proto == "udp":
-                self._send_udp_probe(seq)
-            elif proto == "tcp":
-                self._send_tcp_probe(seq)
-            elif proto == "icmp":
-                self._send_icmp_probe(seq)
-        except Exception as e:
-            if self.flag_verbose:
-                self._print_warning(f"Failed to send {proto} probe: {e}")
-            return False
-
-        # Record probe info
         with self.lock:
+            probe_id = f"{ttl}-{series}-{proto}-{seq}"
+            send_time = time.time()
+            identifier = None
+
+            # Set TTL
+            if self.ip_protocol == '4':
+                self.sock.setsockopt(socket.SOL_IP, socket.IP_TTL, ttl)
+            else:
+                self.sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_UNICAST_HOPS, ttl)
+
+            # Send based on protocol
+            try:
+                if proto == "udp":
+                    self._send_udp_probe(seq)
+                    identifier = self.src_port  # use source port as the identifier
+                elif proto == "tcp":
+                    self._send_tcp_probe(seq)
+                    identifier = self.src_port # use source port as the identifier
+                elif proto == "icmp":
+                    ident = threading.get_ident() & 0xFFFF  # truncate the thread_id(64bits) to match the length of ICMP identifier
+                    self._send_icmp_probe(seq, ident)
+                    identifier = ident  # use thread_id as the identifier
+            except Exception as e:
+                if self.flag_verbose:
+                    self._print_warning(f"Failed to send {proto} probe: {e}")
+                return False
+
             self.probes_sent[probe_id] = {
                 'send_time': send_time,
                 'ttl': ttl,
                 'series': series,
                 'proto': proto,
                 'seq': seq,
+                'identifier': identifier,  # 新增字段
                 'matched': False
             }
-
         return True
+
+    # def _send_probe(self, ttl: int, series: int, proto: str, seq: int) -> bool:
+    #     if self.flag_simulate:
+    #         return True
+    #
+    #     probe_id = f"{ttl}-{series}-{proto}-{seq}"
+    #     send_time = time.time()
+    #
+    #     # Set TTL
+    #     if self.ip_protocol == '4':
+    #         self.sock.setsockopt(socket.SOL_IP, socket.IP_TTL, ttl)
+    #     else:
+    #         self.sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_UNICAST_HOPS, ttl)
+    #
+    #     # Send based on protocol
+    #     try:
+    #         if proto == "udp":
+    #             self._send_udp_probe(seq)
+    #         elif proto == "tcp":
+    #             self._send_tcp_probe(seq)
+    #         elif proto == "icmp":
+    #             self._send_icmp_probe(seq)
+    #     except Exception as e:
+    #         if self.flag_verbose:
+    #             self._print_warning(f"Failed to send {proto} probe: {e}")
+    #         return False
+    #
+    #     # Record probe info
+    #     with self.lock:
+    #         self.probes_sent[probe_id] = {
+    #             'send_time': send_time,
+    #             'ttl': ttl,
+    #             'series': series,
+    #             'proto': proto,
+    #             'seq': seq,
+    #             'matched': False
+    #         }
+    #
+    #     return True
 
     def _send_udp_probe(self, seq: int):
         port = self.dest_port + seq - 1
@@ -471,8 +508,7 @@ class Traceroute:
 
         self.sock.sendto(packet, (self.dest_ip, self.dest_port))
 
-    def _send_icmp_probe(self, seq: int):
-        ident = random.randint(0, 65535)
+    def _send_icmp_probe(self, seq: int, ident: int):
         checksum = 0
         header = struct.pack("!BBHHH", 8, 0, checksum, ident, seq)
         data = b"P" * (self.packet_size - len(header))
@@ -678,6 +714,7 @@ class Traceroute:
                         not probe['matched']):
                     rtt = (time.time() - probe['send_time']) * 1000
                     reached = src_ip == self.dest_ip
+                    self.reached = reached
 
                     self._record_hop_result(
                         probe['ttl'],
@@ -789,10 +826,9 @@ class Traceroute:
                     else:
                         line += "    *     "
 
-        print(line)
 
-        if self.flag_show_extensions and hop.get('extensions'):
-            self._display_extensions(hop['extensions'])
+        # if self.flag_show_extensions and hop.get('extensions'):
+        #     self._display_extensions(hop['extensions'])
 
     def _display_extensions(self, extensions: dict):
         if extensions.get('mpls'):
@@ -807,24 +843,17 @@ class Traceroute:
                 print(f"      Type={ext['type']}, Length={ext['length']}")
 
     def _display_final_results(self):
-        print("\n=== Traceroute Results ===")
         reached_target = False
-
         for ttl in sorted(self.results.keys()):
             hop = self.results[ttl]
-
-            # Skip hops with no responses at all
             if all(len(hop[proto]['probes']) == 0 for proto in ['udp', 'tcp', 'icmp']):
                 continue
-
-            print(f"\nHop {ttl}:")
-
-            # Display IP and hostname
-            ips = set()
+            ips = list()
             for proto in ['udp', 'tcp', 'icmp']:
                 for probe in hop[proto]['probes']:
                     if probe['from']:
-                        ips.add(probe['from'])
+                        if ips and ips[-1]!=probe['from']:
+                            ips.append(probe['from'])
 
             for ip in ips:
                 hostname = ip
@@ -833,44 +862,18 @@ class Traceroute:
                         hostname = socket.gethostbyaddr(ip)[0]
                     except (socket.herror, socket.gaierror):
                         pass
-                print(f"  IP: {ip} ({hostname})")
 
-                # Check if we reached target
-                if ip == self.dest_ip:
-                    reached_target = True
 
-            # Display statistics per protocol
-            for proto in self.probe_sequence:
-                stats = hop[proto]['stats']
-                if not stats:
-                    continue
-                if stats:
-                    if stats['count'] > 0:
-                        print(f"  {proto.upper()} Stats: "
-                            f"Sent={stats['count']}, "
-                            f"Responses={stats['responses']}, "
-                            f"Loss={stats['loss']:.0%}")
-
-                        if stats['responses'] > 0:
-                            print(f"    RTT: Min={stats['min']:.2f}ms, "
-                                f"Avg={stats['avg']:.2f}ms, "
-                                f"Max={stats['max']:.2f}ms")
-
-            # Display extensions if present
-            if self.flag_show_extensions and hop.get('extensions'):
-                self._display_extensions(hop['extensions'])
-
-        if not reached_target:
-            print("\nWarning: Did not reach target host within max hops")
-
-        # Add metadata to results
         self.results['metadata'] = {
+            'series': self.probe_sequence,
             'target': self.dest_ip,
             'protocol': self.protocol,
             'ip_version': self.ip_protocol,
             'timestamp': time.strftime("%Y-%m-%d %H:%M:%S"),
-            'reached_target': reached_target
+            'reached_target': self.reached
         }
+
+
 
 
     @staticmethod

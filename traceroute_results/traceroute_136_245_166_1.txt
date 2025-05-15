@@ -1,0 +1,73 @@
+Traceroute results for 136.245.166.1
+==================================================
+
+Target: 136.245.166.1
+Series: ['udp', 'tcp', 'icmp']
+IP Version: 4
+Timestamp: 2025-05-15 15:19:20
+Reached Target: No
+
+Hop 1:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 27.66 ms
+      Avg RTT: 27.66 ms
+      Max RTT: 27.66 ms
+    Probe details:
+      Probe 1: RTT: 27.66 ms from 10.209.64.1 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 33.64 ms
+      Avg RTT: 33.64 ms
+      Max RTT: 33.64 ms
+    Probe details:
+      Probe 1: RTT: 33.64 ms from 10.209.64.1 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 214.74 ms
+      Avg RTT: 214.74 ms
+      Max RTT: 214.74 ms
+    Probe details:
+      Probe 1: RTT: 214.74 ms from 10.213.32.41 
+
+Hop 2:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 115.81 ms
+      Avg RTT: 115.81 ms
+      Max RTT: 115.81 ms
+    Probe details:
+      Probe 1: RTT: 115.81 ms from 10.213.32.41 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 382.11 ms
+      Avg RTT: 382.11 ms
+      Max RTT: 382.11 ms
+    Probe details:
+      Probe 1: RTT: 382.11 ms from 10.213.32.22 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 382.62 ms
+      Avg RTT: 382.62 ms
+      Max RTT: 382.62 ms
+    Probe details:
+      Probe 1: RTT: 382.62 ms from 10.213.32.22 
+

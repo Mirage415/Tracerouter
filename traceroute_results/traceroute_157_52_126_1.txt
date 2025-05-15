@@ -1,0 +1,69 @@
+Traceroute results for 157.52.126.1
+==================================================
+
+Target: 157.52.126.1
+Series: ['udp', 'tcp', 'icmp']
+IP Version: 4
+Timestamp: 2025-05-15 15:19:33
+Reached Target: No
+
+Hop 1:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 37.19 ms
+      Avg RTT: 37.19 ms
+      Max RTT: 37.19 ms
+    Probe details:
+      Probe 1: RTT: 37.19 ms from 10.209.64.1 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 50.10 ms
+      Avg RTT: 50.10 ms
+      Max RTT: 50.10 ms
+    Probe details:
+      Probe 1: RTT: 50.10 ms from 10.209.64.1 
+  ICMP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 146.60 ms
+      Avg RTT: 146.60 ms
+      Max RTT: 146.60 ms
+    Probe details:
+      Probe 1: RTT: 146.60 ms from 10.213.33.25 
+
+Hop 2:
+  UDP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 223.13 ms
+      Avg RTT: 223.13 ms
+      Max RTT: 223.13 ms
+    Probe details:
+      Probe 1: RTT: 223.13 ms from 10.213.32.41 
+  TCP:
+    Statistics:
+      Probes sent: 1
+      Responses: 1
+      Loss: 0.0%
+      Min RTT: 226.17 ms
+      Avg RTT: 226.17 ms
+      Max RTT: 226.17 ms
+    Probe details:
+      Probe 1: RTT: 226.17 ms from 10.213.32.41 
+  ICMP:
+    Statistics:
+      Probes sent: 0
+      Responses: 0
+      Loss: 0.0%
+    Probe details:
+
