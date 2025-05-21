@@ -1,0 +1,2 @@
+hop,protocol,probe_index,ip,latitude,longitude,message
+,,,,,,Error decoding JSON file: traceroute_results/traceroute_151_243_106_1.json
